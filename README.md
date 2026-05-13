@@ -28,5 +28,5 @@ O ecossistema é dividido nos seguintes serviços independentes:
 **Passos:**
 1. Clone o repositório:
    ```bash
-   git clone [https://github.com/seu-usuario/scinexus.git](https://github.com/seu-usuario/scinexus.git)
+   git clone [https://github.com/FSMota/scinexus.git](https://github.com/FSMota/scinexus.git)
    cd scinexus
