@@ -1,0 +1,53 @@
+services:
+  # Banco de Dados Único (com múltiplos bancos lógicos)
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: scinexus_main
+    ports:
+      - "5432:5432"
+    networks:
+      - scinexus-net
+
+  # Microserviço de Autenticação
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/auth_db
+      - JWT_SECRET=minha_chave_super_secreta
+    depends_on:
+      - db
+    networks:
+      - scinexus-net
+
+  # Microserviço de Eventos
+  event-service:
+    build: ./event-service
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/event_db
+    depends_on:
+      - db
+    networks:
+      - scinexus-net
+
+  # Microserviço de Submissões
+  submission-service:
+    build: ./submission-service
+    ports:
+      - "8003:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/submission_db
+    depends_on:
+      - db
+    networks:
+      - scinexus-net
+
+networks:
+  scinexus-net:
+    driver: bridge
