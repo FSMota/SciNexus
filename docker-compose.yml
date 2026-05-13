@@ -10,6 +10,9 @@ services:
       - "5432:5432"
     networks:
       - scinexus-net
+    volumes:
+      # Mapeia o seu arquivo local para a pasta de inicialização do container
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   # Microserviço de Autenticação
   auth-service:
