@@ -20,7 +20,7 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/auth_db
+      - DATABASE_URL=postgresql+psycopg://user:password@db:5432/auth_db
       - JWT_SECRET=minha_chave_super_secreta
     depends_on:
       - db
@@ -33,7 +33,7 @@ services:
     ports:
       - "8002:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/event_db
+      - DATABASE_URL=postgresql+psycopg://user:password@db:5432/event_db
     depends_on:
       - db
     networks:
@@ -45,7 +45,7 @@ services:
     ports:
       - "8003:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/submission_db
+      - DATABASE_URL=postgresql+psycopg://user:password@db:5432/submission_db
     depends_on:
       - db
     networks:

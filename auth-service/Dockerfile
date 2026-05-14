@@ -17,7 +17,7 @@ RUN uv sync --frozen --no-dev
 COPY . .
 
 # Expõe a porta (será diferente para cada serviço no compose)
-EXPOSE 8001
+EXPOSE 8000
 
 # Comando para rodar a aplicação usando o FastAPI CLI
-CMD ["uv", "run", "fastapi", "run", "app/main.py", "--port", "8001"]
+CMD ["uv", "run", "fastapi", "run", "app/main.py", "--port", "8000"]
