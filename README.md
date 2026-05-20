@@ -25,6 +25,16 @@ O ecossistema é dividido nos seguintes serviços independentes:
 * Docker e Docker Compose instalados.
 * Git.
 
+**Atalhos com Make:**
+```bash
+make build
+make start
+make down
+make recreate
+```
+
+Se quiser, você também pode ver todos os alvos disponíveis com `make help`.
+
 **Passos:**
 1. Clone o repositório:
    ```bash

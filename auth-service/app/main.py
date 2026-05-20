@@ -1,13 +1,14 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy.orm import Session
+
 from .models import User, UserCreate, UserResponse
 from .utils.security import hash_password
-from app.database import Base, SessionLocal, engine
+from app.database import get_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
     yield
 
 
@@ -31,22 +32,31 @@ def health_check():
 
 
 @app.post("/users/", response_model=UserResponse)
-async def create_user(user: UserCreate):
-    db = SessionLocal()
-    # Hash password
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
     hashed_pwd = hash_password(user.password)
-    
-    # Create DB object
+
     db_user = User(
         email=user.email,
         username=user.username,
         hashed_password=hashed_pwd,
-        full_name=user.full_name
+        full_name=user.full_name,
     )
-    
-    # Save to DB
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
+
     return db_user
+
+
+@app.get("/users/", response_model=list[UserResponse])
+def list_users(db: Session = Depends(get_db)):
+    return db.query(User).order_by(User.id).all()
+
+
+@app.get("/users/{user_id}", response_model=UserResponse)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
