@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { AuthShell } from '@/components/auth/auth-shell'
+import { api } from '@/services/api'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -44,13 +45,7 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      const response = await fetch('http://localhost:8001/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginData),
-      })
+      const response = await api.post('/auth/login', loginData)
 
       if (response.ok) {
         const data = await response.json()
@@ -73,13 +68,7 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      const response = await fetch('http://localhost:8001/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(signupData),
-      })
+      const response = await api.post('/auth/register', signupData)
 
       if (response.ok) {
         alert('Conta criada com sucesso! Faça login para continuar.')

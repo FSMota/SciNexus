@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { AuthShell } from '@/components/auth/auth-shell'
+import { api } from '@/services/api'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -31,13 +32,7 @@ export default function RegisterPage() {
     setIsLoading(true)
     
     try {
-      const response = await fetch('http://localhost:8001/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
+      const response = await api.post('/auth/register', formData)
 
       if (response.ok) {
         router.push('/login')

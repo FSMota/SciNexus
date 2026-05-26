@@ -4,6 +4,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useEffect } from 'react'
+import { CatalogSection } from '@/components/catalog/catalog-section'
+import { SessionTabs } from '@/components/events/session-tabs'
 
 export default function DashboardPage() {
   const { user, isLoading, isAuthenticated, logout } = useAuth()
@@ -57,7 +59,7 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-2">
           <h2 className="text-xl font-semibold mb-4">Welcome, {user.full_name || user.username}!</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-gray-50 rounded">
@@ -74,12 +76,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        <SessionTabs />
 
-        {/* Placeholder for content */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Dashboard</h3>
-          <p className="text-gray-600">Your dashboard content will go here.</p>
-        </div>
+        <CatalogSection variant="full" />
       </main>
     </div>
   )

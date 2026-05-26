@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@/types'
+import { api } from '@/services/api'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -16,11 +17,7 @@ export function useAuth() {
     }
 
     try {
-      const response = await fetch('http://localhost:8001/auth/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await api.get('/auth/me')
 
       if (response.ok) {
         const data = await response.json()
@@ -49,12 +46,7 @@ export function useAuth() {
     const token = localStorage.getItem('access_token')
     if (token) {
       try {
-        await fetch('http://localhost:8001/auth/logout', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        await api.post('/auth/logout')
       } catch (error) {
         console.error('Erro ao fazer logout:', error)
       }

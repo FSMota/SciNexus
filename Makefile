@@ -27,7 +27,7 @@ help:
 	@echo "  make recreate-auth       - recria auth-service"
 	@echo "  make recreate-event      - recria event-service"
 	@echo "  make recreate-submission - recria submission-service"
-	@echo "  make run-auth            - roda o auth-service localmente com o Postgres do Docker"
+	@echo "  make run-auth            - roda o auth-service localmente com o Postgres do Docker e aplica migrations"
 	@echo "  make run-event           - roda o event-service localmente com o Postgres do Docker"
 	@echo "  make run-submission      - roda o submission-service localmente com o Postgres do Docker"
 	@echo "  make db-up               - sobe apenas o banco do Docker"
@@ -99,10 +99,10 @@ recreate-submission:
 	$(COMPOSE) up -d --build --force-recreate $(SUBMISSION_SERVICE)
 
 db-up:
-	$(COMPOSE) up -d db
+	$(COMPOSE) up -d --wait db
 
 run-auth:
-	$(COMPOSE) up -d db
+	$(MAKE) migrate
 	DATABASE_URL=$(AUTH_DATABASE_URL) uv run --directory $(AUTH_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 run-event:
@@ -132,6 +132,7 @@ clean:
 	$(COMPOSE) down -v
 
 migrate:
+	$(MAKE) db-up
 	DATABASE_URL=$(AUTH_DATABASE_URL) uv run --directory $(AUTH_SERVICE) alembic upgrade head
 
 migrate-event:

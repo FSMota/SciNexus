@@ -1,13 +1,10 @@
 import Link from 'next/link'
 import { ArrowRight, CalendarDays, FileText, Medal, Sparkles, UsersRound } from 'lucide-react'
 
+import { CatalogSection } from '@/components/catalog/catalog-section'
 import { Button } from '@/components/ui/button'
 
-const highlights = [
-  'Agenda e submissão integradas',
-  'Certificados automáticos',
-  'Peer review centralizado',
-]
+const highlights = ['Agenda e submissão integradas', 'Certificados automáticos', 'Peer review centralizado']
 
 const features = [
   {
@@ -96,7 +93,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-14 rounded-2xl border-white/18 bg-white/6 px-7 text-base font-semibold text-white hover:bg-white/12 hover:text-white">
-                <Link href="/login">Explorar eventos</Link>
+                <Link href="#catalog">Explorar eventos</Link>
               </Button>
             </div>
 
@@ -106,6 +103,32 @@ export default function Home() {
                   {item}
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <CatalogSection variant="compact" showControls={false} />
+
+      <section className="bg-background px-4 pb-20 text-foreground sm:px-6 lg:px-8 lg:pb-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-4xl border border-border/80 bg-card px-8 py-10 shadow-elegant sm:px-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
+              Catálogo completo
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">
+              Para ver todos os eventos, entre na sua conta.
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+              A experiência completa fica disponível após login, com busca, filtros, paginação contínua e cards maiores.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild className="rounded-2xl px-6">
+                <Link href="/login">Entrar para ver tudo</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-2xl border-border bg-background px-6 text-foreground hover:bg-muted">
+                <Link href="/register">Criar conta</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -128,10 +151,7 @@ export default function Home() {
                 const Icon = feature.icon
 
                 return (
-                  <article
-                    key={feature.title}
-                    className="min-h-55 p-8 sm:p-10"
-                  >
+                  <article key={feature.title} className="min-h-55 p-8 sm:p-10">
                     <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-primary shadow-sm">
                       <Icon className="h-6 w-6" />
                     </div>
@@ -176,7 +196,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
     </main>
   )
 }
