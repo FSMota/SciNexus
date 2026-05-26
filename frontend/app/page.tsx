@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, CalendarDays, FileText, Medal, Sparkles, UsersRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 
@@ -7,6 +7,29 @@ const highlights = [
   'Agenda e submissão integradas',
   'Certificados automáticos',
   'Peer review centralizado',
+]
+
+const features = [
+  {
+    icon: CalendarDays,
+    title: 'Eventos & cronograma',
+    description: 'Crie eventos com agenda detalhada, datas e descrição.',
+  },
+  {
+    icon: FileText,
+    title: 'Submissão de artigos',
+    description: 'Autores enviam PDFs diretamente pela plataforma.',
+  },
+  {
+    icon: UsersRound,
+    title: 'Peer-review',
+    description: 'Distribuição automática para avaliadores com notas e comentários.',
+  },
+  {
+    icon: Medal,
+    title: 'Certificados',
+    description: 'Geração instantânea em PDF para autores e participantes.',
+  },
 ]
 
 export default function Home() {
@@ -87,6 +110,73 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <section className="bg-background px-4 py-20 text-foreground sm:px-6 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 sm:mb-12">
+            <p className="text-sm font-semibold uppercase tracking-[0.34em] text-primary">
+              Funcionalidades
+            </p>
+            <h2 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">
+              Tudo que um congresso precisa.
+            </h2>
+          </div>
+
+          <div className="overflow-hidden rounded-4xl border border-border/80 bg-card shadow-elegant">
+            <div className="grid divide-y divide-border/80 md:grid-cols-2 md:divide-x md:divide-y">
+              {features.map((feature) => {
+                const Icon = feature.icon
+
+                return (
+                  <article
+                    key={feature.title}
+                    className="min-h-55 p-8 sm:p-10"
+                  >
+                    <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-primary shadow-sm">
+                      <Icon className="h-6 w-6" />
+                    </div>
+
+                    <h3 className="mt-8 text-2xl font-semibold tracking-tight text-foreground">
+                      {feature.title}
+                    </h3>
+
+                    <p className="mt-4 max-w-md text-base leading-8 text-muted-foreground">
+                      {feature.description}
+                    </p>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-background px-4 pb-20 text-foreground sm:px-6 lg:px-8 lg:pb-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="overflow-hidden rounded-4xl border border-border/70 bg-linear-to-br from-slate-950 via-primary to-sky-700 p-8 shadow-elegant sm:p-12 lg:p-16">
+            <div className="max-w-4xl">
+              <h2 className="max-w-3xl text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+                Pronto para organizar seu próximo congresso?
+              </h2>
+
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-white/75 sm:text-xl">
+                Comece em minutos. Sem cartão de crédito.
+              </p>
+
+              <div className="mt-10">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-14 rounded-2xl bg-white px-8 text-base font-semibold text-slate-950 shadow-[0_18px_50px_-20px_rgba(255,255,255,0.8)] hover:bg-slate-100"
+                >
+                  <Link href="/register">Criar minha conta</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   )
 }

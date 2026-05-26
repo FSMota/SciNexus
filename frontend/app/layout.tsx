@@ -29,7 +29,14 @@ export default function RootLayout({
       lang="en"
       className={`${spaceGrotesk.variable} ${dmSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        <div className="flex-1">{children}</div>
+        <footer className="border-t border-border/70 bg-background px-4 py-8 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            © 2026 SciNexus · Plataforma de eventos científicos
+          </div>
+        </footer>
+      </body>
     </html>
   );
 }
