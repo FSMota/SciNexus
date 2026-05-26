@@ -40,7 +40,9 @@ export function useAuth() {
   }, [])
 
   useEffect(() => {
-    fetchCurrentUser()
+    queueMicrotask(() => {
+      void fetchCurrentUser()
+    })
   }, [fetchCurrentUser])
 
   const logout = useCallback(async () => {

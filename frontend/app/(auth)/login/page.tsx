@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Mail, Lock } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
+import { Mail, Lock } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { AuthShell } from '@/components/auth/auth-shell'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -38,7 +39,7 @@ export default function LoginPage() {
     }))
   }
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     
@@ -67,7 +68,7 @@ export default function LoginPage() {
     }
   }
 
-  const handleSignupSubmit = async (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     
@@ -96,47 +97,35 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-black mb-4">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">SciNexus</h1>
-          <p className="text-sm text-gray-500">
-            The repository for collaborative scientific discovery.
-          </p>
-        </div>
-
-        <Card className="border-gray-200 shadow-sm">
-          <CardContent className="pt-6">
+    <AuthShell
+      title="SciNexus"
+      description="The repository for collaborative scientific discovery."
+    >
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsList className="grid h-12 w-full grid-cols-2 rounded-2xl bg-muted p-1 mb-6">
+                <TabsTrigger value="login" className="rounded-xl data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm">
+                  Login
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="rounded-xl data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm">
+                  Sign Up
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
                 <form onSubmit={handleLoginSubmit} className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-2 block">
+                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Institutional Email
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Mail className="absolute left-3 top-3 w-4 h-4 text-primary/60" />
                       <Input
                         type="email"
                         name="email"
                         value={loginData.email}
                         onChange={handleLoginChange}
                         placeholder="name@institution.edu"
-                        className="pl-10 border-gray-300"
+                        className="h-11 border-border bg-background/70 pl-10 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                         required
                       />
                     </div>
@@ -144,25 +133,25 @@ export default function LoginPage() {
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-semibold text-gray-700">
+                      <label className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                         Password
                       </label>
                       <a
                         href="#"
-                        className="text-xs text-blue-600 hover:text-blue-700"
+                        className="text-xs font-medium text-primary hover:text-primary/80"
                       >
                         Forgot password?
                       </a>
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Lock className="absolute left-3 top-3 w-4 h-4 text-primary/60" />
                       <Input
                         type="password"
                         name="password"
                         value={loginData.password}
                         onChange={handleLoginChange}
                         placeholder="••••••••"
-                        className="pl-10 border-gray-300"
+                        className="h-11 border-border bg-background/70 pl-10 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                         required
                       />
                     </div>
@@ -171,7 +160,7 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-black text-white hover:bg-gray-800 h-10"
+                    className="h-11 w-full rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
                   >
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
@@ -179,10 +168,10 @@ export default function LoginPage() {
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300" />
+                    <div className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="px-2 bg-white text-gray-500">
+                    <span className="bg-card px-2 text-muted-foreground">
                       OR CONTINUE WITH
                     </span>
                   </div>
@@ -191,7 +180,7 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full border-gray-300 text-gray-700"
+                  className="h-11 w-full rounded-xl border-border bg-background/70 text-foreground hover:bg-muted hover:text-foreground"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -203,13 +192,13 @@ export default function LoginPage() {
                   Single Sign-On (SSO)
                 </Button>
 
-                <p className="text-xs text-gray-500 text-center mt-6">
-                  By continuing, you agree to SciNexus{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
+                <p className="mt-6 text-center text-xs text-muted-foreground">
+                  By continuing, you agree to SciNexus{' '}
+                  <a href="#" className="text-primary hover:underline">
                     Terms of Service
                   </a>{" "}
                   and{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
+                  <a href="#" className="text-primary hover:underline">
                     Privacy Policy
                   </a>
                 </p>
@@ -218,7 +207,7 @@ export default function LoginPage() {
               <TabsContent value="signup">
                 <form onSubmit={handleSignupSubmit} className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-2 block">
+                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Full Name
                     </label>
                     <Input
@@ -227,13 +216,13 @@ export default function LoginPage() {
                       value={signupData.full_name}
                       onChange={handleSignupChange}
                       placeholder="Your name"
-                      className="border-gray-300"
+                      className="h-11 border-border bg-background/70 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-2 block">
+                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Username
                     </label>
                     <Input
@@ -242,43 +231,43 @@ export default function LoginPage() {
                       value={signupData.username}
                       onChange={handleSignupChange}
                       placeholder="Your username"
-                      className="border-gray-300"
+                      className="h-11 border-border bg-background/70 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                       required
                       minLength={3}
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-2 block">
+                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Institutional Email
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Mail className="absolute left-3 top-3 w-4 h-4 text-primary/60" />
                       <Input
                         type="email"
                         name="email"
                         value={signupData.email}
                         onChange={handleSignupChange}
                         placeholder="name@institution.edu"
-                        className="pl-10 border-gray-300"
+                        className="h-11 border-border bg-background/70 pl-10 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-2 block">
+                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Password
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Lock className="absolute left-3 top-3 w-4 h-4 text-primary/60" />
                       <Input
                         type="password"
                         name="password"
                         value={signupData.password}
                         onChange={handleSignupChange}
                         placeholder="••••••••"
-                        className="pl-10 border-gray-300"
+                        className="h-11 border-border bg-background/70 pl-10 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                         required
                         minLength={8}
                       />
@@ -288,16 +277,20 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-black text-white hover:bg-gray-800 h-10"
+                    className="h-11 w-full rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
                   >
                     {isLoading ? 'Creating...' : 'Create Account'}
                   </Button>
                 </form>
+
+                <p className="mt-5 text-center text-sm text-muted-foreground">
+                  Already have an account?{' '}
+                  <Link href="/login" className="font-medium text-primary hover:underline">
+                    Sign in
+                  </Link>
+                </p>
               </TabsContent>
             </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </AuthShell>
   )
 }
