@@ -15,7 +15,7 @@ export default function Home() {
       <header className="border-b border-white/10 bg-white/95 text-slate-900 backdrop-blur">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 via-primary to-sky-700 shadow-elegant">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-slate-900 via-primary to-sky-700 shadow-elegant">
               <svg
                 viewBox="0 0 24 24"
                 className="h-7 w-7 text-white"
@@ -47,7 +47,7 @@ export default function Home() {
       </header>
 
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(91,150,255,0.32),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(12,23,52,0.65),_transparent_42%)]" />
+        <div className="absolute inset-0 [radial-gradient(circle_at_top_right,rgba(91,150,255,0.32),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(12,23,52,0.65),transparent_42%)]" />
         <div className="absolute inset-x-0 top-0 h-px bg-white/10" />
 
         <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-7xl items-center px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
