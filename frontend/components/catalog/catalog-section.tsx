@@ -5,14 +5,10 @@ import Link from 'next/link'
 import { ArrowRight, CalendarDays, Filter, MapPin, Search } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { useEvents } from '@/hooks/useEvents'
+import { CatalogEvent } from '@/lib/events'
 
-import {
-  catalogEvents,
-  categoryStyles,
-  sortOptions,
-  type CatalogEvent,
-  type CategoryName,
-} from './catalog-data'
+import { categoryLabels, categoryStyles, sortOptions, type CategoryName } from './catalog-data'
 
 type CatalogSectionProps = {
   variant?: 'compact' | 'full'
@@ -29,11 +25,12 @@ export function CatalogSection({ variant = 'compact', showControls = true }: Cat
   const [selectedSort, setSelectedSort] = useState<(typeof sortOptions)[number]>('Mais recentes')
   const [visibleCount, setVisibleCount] = useState(fullInitialVisibleCount)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const { events, isLoading, error } = useEvents()
 
   const categoryCounts = useMemo(() => {
     const baseCounts = new Map<CategoryName, number>()
 
-    for (const event of catalogEvents) {
+    for (const event of events) {
       baseCounts.set(event.category, (baseCounts.get(event.category) ?? 0) + 1)
     }
 
@@ -46,11 +43,11 @@ export function CatalogSection({ variant = 'compact', showControls = true }: Cat
   const filteredEvents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
-    const filtered = catalogEvents.filter((event) => {
+    const filtered = events.filter((event) => {
       const categoryMatches = selectedCategory === 'Todas' || event.category === selectedCategory
       const queryMatches =
         normalizedQuery.length === 0 ||
-        [event.title, event.category, event.date, event.location, event.status, event.attendees, event.summary]
+        [event.title, event.category, event.date, event.location, event.status, event.attendees, event.summary, event.tags.join(' ')]
           .join(' ')
           .toLowerCase()
           .includes(normalizedQuery)
@@ -64,12 +61,12 @@ export function CatalogSection({ variant = 'compact', showControls = true }: Cat
           return left.highlight ? -1 : 1
         }
 
-        return left.sortDate.localeCompare(right.sortDate)
+        return right.sortDate.localeCompare(left.sortDate)
       }
 
-      return left.sortDate.localeCompare(right.sortDate)
+      return right.sortDate.localeCompare(left.sortDate)
     })
-  }, [query, selectedCategory, selectedSort])
+  }, [events, query, selectedCategory, selectedSort])
 
   useEffect(() => {
     if (variant === 'full') {
@@ -174,7 +171,7 @@ export function CatalogSection({ variant = 'compact', showControls = true }: Cat
                 <div
                   className={`inline-flex rounded-2xl border bg-linear-to-br px-4 py-2 text-sm font-semibold shadow-sm ${categoryStyles[category.name]}`}
                 >
-                  {category.name}
+                  {categoryLabels[category.name]}
                 </div>
                 <p className="mt-4 text-2xl font-semibold tracking-tight text-foreground">{category.count}</p>
                 <p className="mt-1 text-sm text-muted-foreground">eventos ativos</p>
@@ -212,17 +209,29 @@ export function CatalogSection({ variant = 'compact', showControls = true }: Cat
           </div>
         ) : null}
 
+        {isLoading ? (
+          <div className="rounded-3xl border border-dashed border-border/70 bg-background p-10 text-center text-muted-foreground">
+            Carregando eventos cadastrados...
+          </div>
+        ) : null}
+
+        {error && !isLoading ? (
+          <div className="rounded-3xl border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
+
         <div className={variant === 'full' ? 'overflow-hidden rounded-4xl border border-border/80 bg-card shadow-elegant' : ''}>
           <div className={variant === 'full' ? 'grid gap-6 p-6 md:grid-cols-3 lg:p-8' : 'grid gap-4 sm:grid-cols-2 md:grid-cols-3'}>
             {visibleEvents.length > 0 ? (
               visibleEvents.map((event) => (
-                <CatalogEventCard key={event.title} event={event} variant={variant} />
+                <CatalogEventCard key={event.id} event={event} variant={variant} />
               ))
-            ) : (
+            ) : !isLoading ? (
               <div className="rounded-3xl border border-dashed border-border/70 bg-background p-10 text-center text-muted-foreground md:col-span-3 xl:col-span-3">
                 Nenhum evento encontrado para os filtros atuais.
               </div>
-            )}
+            ) : null}
           </div>
 
           {variant === 'full' && remainingCount > 0 ? (
@@ -259,7 +268,7 @@ function CatalogEventCard({ event, variant }: { event: CatalogEvent; variant: 'c
           <div
             className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] ${categoryStyles[event.category]}`}
           >
-            {event.category}
+            {categoryLabels[event.category]}
           </div>
           <h3 className={variant === 'full' ? 'mt-3 text-lg font-semibold tracking-tight text-foreground sm:text-xl' : 'mt-3 text-lg font-semibold tracking-tight text-foreground'}>
             {event.title}
@@ -301,7 +310,7 @@ function CatalogEventCard({ event, variant }: { event: CatalogEvent; variant: 'c
 
       <div className={variant === 'full' ? 'mt-5' : 'mt-5'}>
         <Button asChild variant="outline" className={variant === 'full' ? 'h-9 rounded-2xl border-border bg-background/60 px-3 text-sm text-foreground hover:bg-muted' : 'h-9 rounded-2xl border-border bg-background/60 px-3 text-sm text-foreground hover:bg-muted'}>
-          <Link href={`/events/${event.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')}`}>
+          <Link href={`/events/${event.slug}`}>
             Ver detalhes
             <ArrowRight className="h-4 w-4" />
           </Link>

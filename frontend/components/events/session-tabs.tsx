@@ -5,14 +5,12 @@ import Link from 'next/link'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
-import { catalogEvents } from '@/components/catalog/catalog-data'
-
-function slugify(text: string) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
-}
+import { slugify } from '@/lib/events'
+import { useEvents } from '@/hooks/useEvents'
 
 export function SessionTabs() {
   const { user, isLoading, isAuthenticated } = useAuth()
+  const { events } = useEvents()
   const [data, setData] = useState<any>({})
 
   useEffect(() => {
@@ -24,20 +22,20 @@ export function SessionTabs() {
   const myRegistrations = useMemo(() => {
     if (!user) return []
     const slugs = data.registrations?.[user.id] || []
-    return slugs.map((s: string) => catalogEvents.find((e) => slugify(e.title) === s)).filter(Boolean)
-  }, [data, user])
+    return slugs.map((s: string) => events.find((e) => e.slug === s || slugify(e.title) === s)).filter(Boolean)
+  }, [data, events, user])
 
   const mySubmissions = useMemo(() => {
     if (!user) return []
     const slugs = data.submissions?.[user.id] || []
-    return slugs.map((s: string) => catalogEvents.find((e) => slugify(e.title) === s)).filter(Boolean)
-  }, [data, user])
+    return slugs.map((s: string) => events.find((e) => e.slug === s || slugify(e.title) === s)).filter(Boolean)
+  }, [data, events, user])
 
   const myEvents = useMemo(() => {
     if (!user) return []
     const slugs = data.ownedEvents?.[user.id] || []
-    return slugs.map((s: string) => catalogEvents.find((e) => slugify(e.title) === s)).filter(Boolean)
-  }, [data, user])
+    return slugs.map((s: string) => events.find((e) => e.slug === s || slugify(e.title) === s)).filter(Boolean)
+  }, [data, events, user])
 
   if (!isAuthenticated || !user) {
     return (
@@ -72,12 +70,12 @@ export function SessionTabs() {
             ) : (
               <ul className="space-y-2">
                 {t.items.map((e: any) => (
-                  <li key={e.title} className="flex items-center justify-between">
+                  <li key={e.id} className="flex items-center justify-between">
                     <div>
                       <div className="font-medium">{e.title}</div>
                       <div className="text-xs text-muted-foreground">{e.date} · {e.location}</div>
                     </div>
-                    <Link href={`/events/${slugify(e.title)}`} className="text-sm text-primary">Ver</Link>
+                    <Link href={`/events/${e.slug}`} className="text-sm text-primary">Ver</Link>
                   </li>
                 ))}
               </ul>

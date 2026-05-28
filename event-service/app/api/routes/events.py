@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from slugify import slugify
 
 from app.database import get_db
 from app.models.event import Event
@@ -30,3 +31,15 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
 def getAllEvents(db: Session = Depends(get_db)):
     # retornar todos os eventos
     return db.query(Event).all()
+
+
+@router.get("/{event_slug}", response_model=EventRead)
+def get_event(event_slug: str, db: Session = Depends(get_db)) -> Event:
+    events = db.query(Event).all()
+
+    for event in events:
+        if slugify(event.titulo) == event_slug:
+            return event
+
+    raise HTTPException(status_code=404, detail="Evento não encontrado")
+

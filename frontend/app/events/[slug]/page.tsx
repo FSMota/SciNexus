@@ -2,33 +2,20 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { use, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
-import { CatalogEvent, catalogEvents } from '@/components/catalog/catalog-data'
+import { categoryLabels, categoryStyles } from '@/components/catalog/catalog-data'
 import { useAuth } from '@/hooks/useAuth'
-import { api } from '@/services/api'
+import { useEventBySlug } from '@/hooks/useEvents'
 
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
-}
-
-export default function EventDetailPage({ params }: { params: { slug: string } }) {
-  const { slug } = params
+export default function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
   const router = useRouter()
   const { user, isLoading, isAuthenticated } = useAuth()
-  const [event, setEvent] = useState<CatalogEvent | null>(null)
+  const { event, isLoading: isEventLoading, error } = useEventBySlug(slug)
   const [registering, setRegistering] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    const found = catalogEvents.find((e) => slugify(e.title) === slug)
-    if (found) setEvent(found)
-    else setEvent(null)
-  }, [slug])
 
   const userId = user?.id?.toString() ?? 'anonymous'
 
@@ -57,13 +44,6 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
     if (!event || !user) return
     setRegistering(true)
 
-    try {
-      // try backend endpoint (if present), ignore errors
-      await api.post(`/events/${slug}/register`, { role: 'attendee' })
-    } catch (e) {
-      // ignore
-    }
-
     const key = 'scinexus:rbac'
     const data = JSON.parse(localStorage.getItem(key) || '{}')
     data.registrations = data.registrations || {}
@@ -78,12 +58,6 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
     if (!event || !user) return
     setSubmitting(true)
 
-    try {
-      await api.post(`/events/${slug}/submit`, { role: 'researcher' })
-    } catch (e) {
-      // ignore
-    }
-
     const key = 'scinexus:rbac'
     const data = JSON.parse(localStorage.getItem(key) || '{}')
     data.submissions = data.submissions || {}
@@ -93,11 +67,19 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
     alert('Submissão iniciada!')
   }
 
-  if (!event) {
+  if (isEventLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center text-muted-foreground">Carregando detalhes do evento...</div>
+      </div>
+    )
+  }
+
+  if (!event || error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground">Evento não encontrado.</p>
+          <p className="text-muted-foreground">{error || 'Evento não encontrado.'}</p>
           <div className="mt-4">
             <Link href="/events">
               <Button variant="ghost">Voltar ao catálogo</Button>
@@ -114,7 +96,9 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
         <div className="rounded-2xl bg-card p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${event.category}`}>{event.category}</div>
+              <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] ${categoryStyles[event.category]}`}>
+                {categoryLabels[event.category]}
+              </div>
               <h1 className="mt-3 text-2xl font-bold">{event.title}</h1>
               <p className="mt-2 text-sm text-muted-foreground">{event.date} · {event.location}</p>
             </div>
