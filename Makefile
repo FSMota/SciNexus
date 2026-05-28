@@ -106,8 +106,8 @@ run-auth:
 	DATABASE_URL=$(AUTH_DATABASE_URL) uv run --directory $(AUTH_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 run-event:
-	$(COMPOSE) up -d db
-	DATABASE_URL=$(EVENT_DATABASE_URL) uv run --directory $(EVENT_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	$(MAKE) migrate-event
+	DATABASE_URL=$(EVENT_DATABASE_URL) uv run --directory $(EVENT_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 
 run-submission:
 	$(COMPOSE) up -d db
