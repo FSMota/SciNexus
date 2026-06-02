@@ -2,12 +2,14 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { use, useMemo, useState } from 'react'
+import { use, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, MapPin, CalendarDays, Sparkles } from 'lucide-react'
 import { categoryLabels, categoryStyles, type CategoryName } from '@/components/catalog/catalog-data'
 import { useAuth } from '@/hooks/useAuth'
 import { useEventBySlug } from '@/hooks/useEvents'
+import { useSubscribeToEvent } from '@/hooks/useEventMutations'
+import { useEventParticipation } from '@/hooks/useEventParticipation'
 
 const bannerGradients: Record<CategoryName, string> = {
   tecnologia: 'from-sky-600 via-blue-600 to-cyan-400',
@@ -26,22 +28,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
   const router = useRouter()
   const { user, isLoading, isAuthenticated } = useAuth()
   const { event, isLoading: isEventLoading, error } = useEventBySlug(slug)
-  const [registering, setRegistering] = useState(false)
+  const { subscribe, isSubmitting: registering } = useSubscribeToEvent()
+  const { isRegistered, isSubmitted, markRegistered, markSubmitted } = useEventParticipation(user?.id ?? null)
   const [submitting, setSubmitting] = useState(false)
-
-  const userId = user?.id?.toString() ?? 'anonymous'
-
-  const isRegistered = useMemo(() => {
-    if (!user) return false
-    const data = JSON.parse(localStorage.getItem('scinexus:rbac') || '{}')
-    return (data.registrations?.[user.id] || []).includes(slug)
-  }, [user, slug])
-
-  const isSubmitted = useMemo(() => {
-    if (!user) return false
-    const data = JSON.parse(localStorage.getItem('scinexus:rbac') || '{}')
-    return (data.submissions?.[user.id] || []).includes(slug)
-  }, [user, slug])
 
   const ensureAuthOrRedirect = () => {
     if (!isAuthenticated) {
@@ -54,32 +43,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
   const handleRegister = async () => {
     if (!ensureAuthOrRedirect()) return
     if (!event || !user) return
-    setRegistering(true)
 
     try {
-      const response = await fetch(`/api/events/${slug}/subscriptions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: user.id }),
-      })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        throw new Error(payload?.message || 'Falha ao realizar inscrição')
-      }
-
-      const key = 'scinexus:rbac'
-      const data = JSON.parse(localStorage.getItem(key) || '{}')
-      data.registrations = data.registrations || {}
-      data.registrations[user.id] = Array.from(new Set([...(data.registrations[user.id] || []), slug]))
-      localStorage.setItem(key, JSON.stringify(data))
+      await subscribe(slug, user.id)
+      markRegistered(slug)
       alert('Inscrição realizada!')
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Falha ao realizar inscrição')
-    } finally {
-      setRegistering(false)
     }
   }
 
@@ -87,15 +57,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
     if (!ensureAuthOrRedirect()) return
     if (!event || !user) return
     setSubmitting(true)
-
-    const key = 'scinexus:rbac'
-    const data = JSON.parse(localStorage.getItem(key) || '{}')
-    data.submissions = data.submissions || {}
-    data.submissions[user.id] = Array.from(new Set([...(data.submissions[user.id] || []), slug]))
-    localStorage.setItem(key, JSON.stringify(data))
+    markSubmitted(slug)
     setSubmitting(false)
     alert('Submissão iniciada!')
   }
+
+  const registered = isRegistered(slug)
+  const submitted = isSubmitted(slug)
 
   if (isEventLoading) {
     return (
@@ -158,11 +126,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
                 <p className="text-sm text-white/80">Inscrição para ouvintes e submissão para pesquisadores.</p>
               </div>
               <div className="flex flex-col gap-3">
-                <Button onClick={handleRegister} disabled={isRegistered || registering}>
-                  {isRegistered ? 'Inscrito' : registering ? 'Inscrevendo...' : 'Inscrever-se (ouvinte)'}
+                <Button onClick={handleRegister} disabled={registered || registering}>
+                  {registered ? 'Inscrito' : registering ? 'Inscrevendo...' : 'Inscrever-se (ouvinte)'}
                 </Button>
-                <Button variant="secondary" onClick={handleSubmit} disabled={isSubmitted || submitting}>
-                  {isSubmitted ? 'Submetido' : submitting ? 'Enviando...' : 'Submeter pesquisa (pesquisador)'}
+                <Button variant="secondary" onClick={handleSubmit} disabled={submitted || submitting}>
+                  {submitted ? 'Submetido' : submitting ? 'Enviando...' : 'Submeter pesquisa (pesquisador)'}
                 </Button>
               </div>
             </div>
