@@ -13,6 +13,7 @@ class EventCreate(BaseModel):
     data_fim: date | None = None
     local: str = Field(min_length=1)
     status: EventStatus = EventStatus.inscricoes_abertas
+    submissoes_abertas: bool = True
     resumo: str = Field(min_length=1)
     tags: list[str] = Field(default_factory=list)
     numero_participantes: int = 0
@@ -28,6 +29,7 @@ class EventRead(BaseModel):
     data_fim: date | None
     local: str
     status: EventStatus
+    submissoes_abertas: bool
     numero_participantes: int
     destaque: bool
     resumo: str

@@ -18,6 +18,7 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
         data_fim=payload.data_fim,
         local=payload.local,
         status=payload.status,
+        submissoes_abertas=payload.submissoes_abertas,
         resumo=payload.resumo,
         tags=payload.tags,
         numero_participantes=payload.numero_participantes,

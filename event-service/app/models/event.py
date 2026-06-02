@@ -48,6 +48,7 @@ class Event(Base):
         nullable=False,
         default=EventStatus.inscricoes_abertas,
     )
+    submissoes_abertas = Column(Boolean, nullable=False, default=True)
     numero_participantes = Column(Integer, nullable=False, default=0)
     destaque = Column(Boolean, nullable=False, default=False)
     resumo = Column(Text, nullable=False)

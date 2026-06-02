@@ -4,10 +4,22 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { use, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
-import { categoryLabels, categoryStyles } from '@/components/catalog/catalog-data'
+import { ArrowRight, MapPin, CalendarDays, Sparkles } from 'lucide-react'
+import { categoryLabels, categoryStyles, type CategoryName } from '@/components/catalog/catalog-data'
 import { useAuth } from '@/hooks/useAuth'
 import { useEventBySlug } from '@/hooks/useEvents'
+
+const bannerGradients: Record<CategoryName, string> = {
+  tecnologia: 'from-sky-600 via-blue-600 to-cyan-400',
+  saúde: 'from-emerald-600 via-teal-600 to-lime-400',
+  engenharia: 'from-amber-500 via-orange-500 to-rose-400',
+  educação: 'from-rose-600 via-fuchsia-600 to-pink-400',
+  direito: 'from-violet-600 via-indigo-600 to-slate-500',
+}
+
+function buildGoogleMapsEmbedUrl(location: string) {
+  return `https://www.google.com/maps?q=${encodeURIComponent(location)}&z=15&output=embed`
+}
 
 export default function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -44,13 +56,31 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
     if (!event || !user) return
     setRegistering(true)
 
-    const key = 'scinexus:rbac'
-    const data = JSON.parse(localStorage.getItem(key) || '{}')
-    data.registrations = data.registrations || {}
-    data.registrations[user.id] = Array.from(new Set([...(data.registrations[user.id] || []), slug]))
-    localStorage.setItem(key, JSON.stringify(data))
-    setRegistering(false)
-    alert('Inscrição realizada!')
+    try {
+      const response = await fetch(`/api/events/${slug}/subscriptions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: user.id }),
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.message || 'Falha ao realizar inscrição')
+      }
+
+      const key = 'scinexus:rbac'
+      const data = JSON.parse(localStorage.getItem(key) || '{}')
+      data.registrations = data.registrations || {}
+      data.registrations[user.id] = Array.from(new Set([...(data.registrations[user.id] || []), slug]))
+      localStorage.setItem(key, JSON.stringify(data))
+      alert('Inscrição realizada!')
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Falha ao realizar inscrição')
+    } finally {
+      setRegistering(false)
+    }
   }
 
   const handleSubmit = async () => {
@@ -93,34 +123,122 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
   return (
     <main className="min-h-screen bg-background py-12">
       <div className="mx-auto max-w-4xl space-y-6 px-4">
-        <div className="rounded-2xl bg-card p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] ${categoryStyles[event.category]}`}>
+        <div className={`relative overflow-hidden rounded-4xl bg-linear-to-br ${bannerGradients[event.category]} text-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]`}>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.28),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.18),transparent_30%)]" />
+          <div className="absolute -right-10 top-8 h-40 w-40 rounded-full bg-white/15 blur-3xl" />
+          <div className="absolute -left-14 bottom-0 h-44 w-44 rounded-full bg-black/10 blur-3xl" />
+          <div className="relative grid gap-8 p-6 md:grid-cols-[1.3fr_0.7fr] md:p-8">
+            <div className="space-y-5">
+              <div className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em]">
                 {categoryLabels[event.category]}
               </div>
-              <h1 className="mt-3 text-2xl font-bold">{event.title}</h1>
-              <p className="mt-2 text-sm text-muted-foreground">{event.date} · {event.location}</p>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold tracking-tight md:text-5xl">{event.title}</h1>
+                <p className="max-w-2xl text-sm leading-6 text-white/85 md:text-base">{event.summary}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-white/90">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5">
+                  <CalendarDays className="h-4 w-4" />
+                  {event.date}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5">
+                  <MapPin className="h-4 w-4" />
+                  {event.location}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5">
+                  <Sparkles className="h-4 w-4" />
+                  Banner genérico
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col gap-3">
-              <Button onClick={handleRegister} disabled={isRegistered || registering}>
-                {isRegistered ? 'Inscrito' : registering ? 'Inscrevendo...' : 'Inscrever-se (ouvinte)'}
-              </Button>
-              <Button variant="secondary" onClick={handleSubmit} disabled={isSubmitted || submitting}>
-                {isSubmitted ? 'Submetido' : submitting ? 'Enviando...' : 'Submeter pesquisa (pesquisador)'}
-              </Button>
+
+            <div className="flex flex-col justify-between gap-4 rounded-[1.5rem] border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/70">Ações do evento</p>
+                <p className="text-sm text-white/80">Inscrição para ouvintes e submissão para pesquisadores.</p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button onClick={handleRegister} disabled={isRegistered || registering}>
+                  {isRegistered ? 'Inscrito' : registering ? 'Inscrevendo...' : 'Inscrever-se (ouvinte)'}
+                </Button>
+                <Button variant="secondary" onClick={handleSubmit} disabled={isSubmitted || submitting}>
+                  {isSubmitted ? 'Submetido' : submitting ? 'Enviando...' : 'Submeter pesquisa (pesquisador)'}
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="mt-6 space-y-4">
-            <p className="text-sm text-muted-foreground">{event.status}</p>
-            <p className="text-base text-foreground">{event.summary}</p>
+          <div className="relative border-t border-white/10 bg-black/10 px-6 py-4 text-sm text-white/85">
             <div className="flex flex-wrap gap-2">
               {event.tags.map((t) => (
-                <span key={t} className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">{t}</span>
+                <span key={t} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium">
+                  {t}
+                </span>
               ))}
             </div>
-            <div className="mt-4 text-sm text-muted-foreground">Participantes estimados: {event.attendees}</div>
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-2xl border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-muted-foreground">Detalhes</p>
+                <h2 className="mt-2 text-xl font-semibold">Resumo do evento</h2>
+              </div>
+              <p className="text-sm text-muted-foreground">{event.status}</p>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <p className="text-base text-foreground">{event.summary}</p>
+              <div className="text-sm text-muted-foreground">Participantes estimados: {event.attendees}</div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-muted-foreground">Localização</p>
+                <h2 className="mt-2 text-xl font-semibold">Google Maps</h2>
+              </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Abrir no Maps
+              </a>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">{event.location}</p>
+
+            <div className="mt-4 overflow-hidden rounded-2xl border bg-muted">
+                <iframe
+                title={`Mapa do evento ${event.title}`}
+                src={buildGoogleMapsEmbedUrl(event.location)}
+                className="h-80 w-full"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] ${categoryStyles[event.category]}`}>
+              {categoryLabels[event.category]}
+            </div>
+            <h2 className="text-lg font-semibold">Informações adicionais</h2>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {event.tags.map((t) => (
+              <span key={t} className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+                {t}
+              </span>
+            ))}
           </div>
         </div>
 

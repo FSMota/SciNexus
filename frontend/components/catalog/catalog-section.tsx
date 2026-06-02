@@ -38,7 +38,7 @@ export function CatalogSection({ variant = 'compact', showControls = true }: Cat
       name,
       count: baseCounts.get(name) ?? 0,
     }))
-  }, [])
+  }, [events])
 
   const filteredEvents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -158,23 +158,31 @@ export function CatalogSection({ variant = 'compact', showControls = true }: Cat
         ) : null}
 
         {variant === 'full' && showControls ? (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('Todas')}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                selectedCategory === 'Todas'
+                  ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                  : 'border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground'
+              }`}
+            >
+              todas ({events.length})
+            </button>
+
             {categoryCounts.map((category) => (
               <button
                 key={category.name}
                 type="button"
                 onClick={() => setSelectedCategory(category.name)}
-                className={`text-left rounded-3xl border bg-card p-5 shadow-elegant transition-transform duration-200 hover:-translate-y-0.5 ${
-                  selectedCategory === category.name ? 'border-primary/40 ring-1 ring-primary/20' : 'border-border/80'
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all ${categoryStyles[category.name]} ${
+                  selectedCategory === category.name
+                    ? 'scale-[1.02] ring-2 ring-primary/20 shadow-sm'
+                    : 'opacity-90 hover:scale-[1.01] hover:opacity-100'
                 }`}
               >
-                <div
-                  className={`inline-flex rounded-2xl border bg-linear-to-br px-4 py-2 text-sm font-semibold shadow-sm ${categoryStyles[category.name]}`}
-                >
-                  {categoryLabels[category.name]}
-                </div>
-                <p className="mt-4 text-2xl font-semibold tracking-tight text-foreground">{category.count}</p>
-                <p className="mt-1 text-sm text-muted-foreground">eventos ativos</p>
+                {categoryLabels[category.name].toLowerCase()} ({category.count})
               </button>
             ))}
           </div>
@@ -282,15 +290,14 @@ function CatalogEventCard({ event, variant }: { event: CatalogEvent; variant: 'c
         ) : null}
       </div>
 
-      {variant === 'full' ? (
-        <p className="mt-3 text-sm leading-6 text-muted-foreground sm:text-sm">
-          {event.summary}
-        </p>
-      ) : null}
-
-      <p className={variant === 'full' ? 'mt-4 text-sm leading-6 text-muted-foreground sm:text-base' : 'mt-4 text-sm leading-6 text-muted-foreground'}>
-        {event.status}
-      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className={getStatusBadgeClass(event.status)}>
+          {event.status}
+        </span>
+        <span className={event.submissionsOpen ? 'inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800' : 'inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600'}>
+          {event.submissionsOpen ? 'Submissões abertas' : 'Submissões encerradas'}
+        </span>
+      </div>
 
       <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
         <div className="flex items-center gap-2">
@@ -299,14 +306,23 @@ function CatalogEventCard({ event, variant }: { event: CatalogEvent; variant: 'c
         </div>
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-primary" />
-          {event.location}
+          {getCompactLocation(event.location)}
         </div>
         <div className="hidden" aria-hidden>
           {/* attendees and updated info kept in data for modeling, not shown in UI */}
         </div>
       </div>
 
-      {/* tags are kept in data for future modeling, not displayed here */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {event.tags.map((tag) => (
+          <span
+            key={tag}
+            className="rounded-full border border-border/80 bg-background px-3 py-1 text-xs font-medium text-muted-foreground"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
 
       <div className={variant === 'full' ? 'mt-5' : 'mt-5'}>
         <Button asChild variant="outline" className={variant === 'full' ? 'h-9 rounded-2xl border-border bg-background/60 px-3 text-sm text-foreground hover:bg-muted' : 'h-9 rounded-2xl border-border bg-background/60 px-3 text-sm text-foreground hover:bg-muted'}>
@@ -318,4 +334,43 @@ function CatalogEventCard({ event, variant }: { event: CatalogEvent; variant: 'c
       </div>
     </article>
   )
+}
+
+function getCompactLocation(location: string) {
+  const statePattern = /\b([A-Za-zÀ-ÿ\s'.-]+?)(?:\s*-\s*|,\s*)([A-Z]{2})\b/
+  const stateMatch = location.match(statePattern)
+
+  if (stateMatch?.[1] && stateMatch[2]) {
+    return `${stateMatch[1].trim()}, ${stateMatch[2]}`
+  }
+
+  const parts = location
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  if (parts.length >= 2) {
+    const city = parts[parts.length - 2]
+    const state = parts[parts.length - 1].replace(/^[-\s]+/, '')
+
+    if (/^[A-Z]{2}$/.test(state)) {
+      return `${city}, ${state}`
+    }
+  }
+
+  return location
+}
+
+function getStatusBadgeClass(status: string) {
+  const normalized = status.toLowerCase()
+
+  if (normalized.includes('abertas')) {
+    return 'inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800'
+  }
+
+  if (normalized.includes('encerradas')) {
+    return 'inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600'
+  }
+
+  return 'inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800'
 }
