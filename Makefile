@@ -106,12 +106,12 @@ run-auth:
 	DATABASE_URL=$(AUTH_DATABASE_URL) uv run --directory $(AUTH_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 run-event:
-	$(COMPOSE) up -d db
-	DATABASE_URL=$(EVENT_DATABASE_URL) uv run --directory $(EVENT_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	$(MAKE) migrate-event
+	DATABASE_URL=$(EVENT_DATABASE_URL) uv run --directory $(EVENT_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 
 run-submission:
-	$(COMPOSE) up -d db
-	DATABASE_URL=$(SUBMISSION_DATABASE_URL) uv run --directory $(SUBMISSION_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	$(MAKE) migrate-submission
+	DATABASE_URL=$(SUBMISSION_DATABASE_URL) uv run --directory $(SUBMISSION_SERVICE) uvicorn app.main:app --reload --host 0.0.0.0 --port 8003
 
 logs:
 	$(COMPOSE) logs -f $(SERVICES)
@@ -136,9 +136,11 @@ migrate:
 	DATABASE_URL=$(AUTH_DATABASE_URL) uv run --directory $(AUTH_SERVICE) alembic upgrade head
 
 migrate-event:
+	$(MAKE) db-up
 	DATABASE_URL=$(EVENT_DATABASE_URL) uv run --directory $(EVENT_SERVICE) alembic upgrade head
 
 migrate-submission:
+	$(MAKE) db-up
 	DATABASE_URL=$(SUBMISSION_DATABASE_URL) uv run --directory $(SUBMISSION_SERVICE) alembic upgrade head
 
 revision:

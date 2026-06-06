@@ -1,3 +1,6 @@
+import { articleSubmissionFormSchema } from "@/lib/schemas"
+import { z } from "zod"
+
 export type User = {
   id: number
   email: string
@@ -10,3 +13,5 @@ export type LoginResponse = {
   access_token: string
   token_type: string
 }
+
+export type ArticleSubmissionFormValues = z.infer<typeof articleSubmissionFormSchema>
