@@ -65,3 +65,29 @@ export async function subscribeToEvent(slug: string, userId: number): Promise<Ev
 
   return eventRelationSchema.parse(await response.json())
 }
+
+export async function updateEvent(eventId: number, payload: CreateEventPayload): Promise<CatalogEvent> {
+  const response = await fetch(`/api/events/${eventId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Falha ao atualizar o evento'))
+  }
+
+  return catalogEventSchema.parse(await response.json())
+}
+
+export async function deleteEvent(eventId: number): Promise<void> {
+  const response = await fetch(`/api/events/${eventId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Falha ao excluir o evento'))
+  }
+}

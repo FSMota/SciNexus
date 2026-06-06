@@ -44,3 +44,30 @@ def get_event(event_slug: str, db: Session = Depends(get_db)) -> Event:
 
     raise HTTPException(status_code=404, detail="Evento não encontrado")
 
+
+@router.put("/{event_id}", response_model=EventRead)
+def update_event(event_id: int, payload: EventCreate, db: Session = Depends(get_db)):
+    """Rota para o Organizador atualizar os dados do evento"""
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    
+    # Atualiza os campos dinamicamente com base no payload do Pydantic
+    for key, value in payload.model_dump().items():
+        setattr(event, key, value)
+        
+    db.commit()
+    db.refresh(event)
+    return event
+
+
+@router.delete("/{event_id}", status_code=204)
+def delete_event(event_id: int, db: Session = Depends(get_db)):
+    """Rota para o Organizador remover o evento do catálogo"""
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+        
+    db.delete(event)
+    db.commit()
+    return

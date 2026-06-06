@@ -116,7 +116,9 @@ export function SessionTabs() {
             <div className="font-medium text-foreground">{e.title}</div>
             <div className="text-xs text-muted-foreground">{e.date} · {e.location}</div>
           </div>
-          <Link href={`/events/${e.slug}`} className="text-sm font-medium text-primary hover:underline">Gerenciar</Link>
+          <Link href={`/events/${e.slug}/edit`} className="text-sm font-medium text-primary hover:underline">
+            Gerenciar
+          </Link>
         </li>
       )
     },
