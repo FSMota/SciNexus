@@ -5,12 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.database import get_db, Base, engine
 from app.api.routes.submissions import router as submissions_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
     yield
 
 

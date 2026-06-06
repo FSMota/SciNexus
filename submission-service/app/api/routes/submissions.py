@@ -24,27 +24,26 @@ async def criar_submissao(
     palavras_chave: str = Form(..., description="Palavras separadas por vírgula"),
     arquivo_pdf: UploadFile = File(...),
     db: Session = Depends(get_db),
-    
-    # A MÁGICA ACONTECE AQUI:
     autor_id: int = Depends(get_usuario_logado_id) 
 ):
     if not arquivo_pdf.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Apenas arquivos PDF são permitidos.")
+
+    # 1. Quebra a string do formulário em uma lista real de strings: ['Métodos numéricos', 'numeros', 'matrizes']
+    lista_palavras = [p.strip() for p in palavras_chave.split(",") if p.strip()]
     
-    # Agora usamos o ID real e seguro que veio de dentro do token do usuário
+    # 2. Salva o arquivo fisicamente no container
     file_path = os.path.join(UPLOAD_DIR, f"evento_{evento_id}_autor_{autor_id}_{arquivo_pdf.filename}")
-    
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(arquivo_pdf.file, buffer)
 
-    lista_palavras = [p.strip() for p in palavras_chave.split(",") if p.strip()]
-
+    # 3. Alimenta o modelo diretamente com a LISTA de strings
     nova_submissao = Submission(
         evento_id=evento_id,
-        autor_principal_id=autor_id, # Variável populada pelo token
+        autor_principal_id=autor_id, 
         titulo=titulo,
         resumo=resumo,
-        palavras_chave=lista_palavras,
+        palavras_chave=lista_palavras, # <-- Passando a lista limpa diretamente aqui
         arquivo_pdf_path=file_path
     )
 
@@ -69,11 +68,9 @@ def listar_submissoes_do_evento(
 @router.get("/minhas-submissoes", response_model=List[SubmissionRead])
 def listar_minhas_submissoes(
     db: Session = Depends(get_db),
-    # usuario = Depends(get_usuario_logado)
+    autor_id: int = Depends(get_usuario_logado_id)
 ):
     """Rota para o Autor ver o status dos artigos que ele mesmo enviou"""
-    autor_id: int = Depends(get_usuario_logado_id)
-    
     submissoes = db.query(Submission).filter(Submission.autor_principal_id == autor_id).all()
     return submissoes
 

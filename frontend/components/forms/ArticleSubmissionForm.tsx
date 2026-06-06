@@ -1,5 +1,6 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { articleSubmissionFormSchema, ArticleSubmissionFormData } from '../../lib/schemas';
 import { useSubmitArticle } from '../../hooks/useSubmitArticle';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,8 @@ interface Props {
 export default function ArticleSubmissionForm({ eventoId, readOnly = false, initialData }: Props) {
   const { submitArticle, isLoading, error } = useSubmitArticle(eventoId || 0);
 
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -33,6 +36,9 @@ export default function ArticleSubmissionForm({ eventoId, readOnly = false, init
     try {
       await submitArticle(data);
       // O redirect ou alerta de sucesso é tratado no componente pai
+      alert('Artigo submetido com sucesso!'); 
+      // Coloque a rota exata da sua tela de "Meus Dados" aqui (ex: '/dashboard' ou '/profile')
+      router.push('/dashboard');
     } catch (err) {
       console.error('Falha na submissão', err);
     }
