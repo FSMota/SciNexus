@@ -22,23 +22,29 @@ export const api = {
   async post(endpoint: string, body?: any, options?: RequestInit) {
     const token = getToken();
 
-    // Start with default headers for JSON
-    const defaultHeaders: HeadersInit = {
-      'Content-Type': 'application/json',
+    let finalBody: BodyInit | undefined;
+    
+    // Inicia os headers baseados no options ou vazios
+    const finalHeaders: Record<string, string> = {
       ...(token && { Authorization: `Bearer ${token}` }),
+      ...(options?.headers as Record<string, string>),
     };
 
-    // Determine the final body and headers
-    let finalBody: BodyInit | undefined = body ? JSON.stringify(body) : undefined;
-    let finalHeaders = { ...defaultHeaders, ...options?.headers };
-
-    // Special handling for FormData
+    // Estratégia de Body e Headers dinâmicos
     if (body instanceof FormData) {
-      // Don't stringify the body
       finalBody = body;
-      // Let the browser set the Content-Type for multipart/form-data
-      // by deleting the one we set by default.
-      delete (finalHeaders as any)['Content-Type'];
+      // O navegador deve definir o Content-Type automaticamente para FormData
+      delete finalHeaders['Content-Type'];
+    } else if (body instanceof URLSearchParams) {
+      // Usado para a rota de Login do FastAPI (OAuth2PasswordRequestForm)
+      finalBody = body;
+      finalHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+    } else if (body) {
+      // Padrão para rotas normais de cadastro e atualização
+      finalBody = JSON.stringify(body);
+      if (!finalHeaders['Content-Type']) {
+        finalHeaders['Content-Type'] = 'application/json';
+      }
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -48,16 +54,8 @@ export const api = {
       body: finalBody,
     });
 
-    // The native Response object doesn't have a `.data` property.
-    // You need to parse the JSON body first.
-    if (!response.ok) {
-        // You might want to throw an error for bad responses
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-    }
-
-    // Return the parsed JSON data instead of the whole response
-    return response.json();
+    // Retorna o objeto Response nativo, delegando o .json() e o .ok para os hooks
+    return response;
   },
 
   async put(endpoint: string, body?: unknown) {

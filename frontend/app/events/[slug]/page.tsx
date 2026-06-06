@@ -56,12 +56,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
   const handleSubmit = async () => {
     if (!ensureAuthOrRedirect()) return
     if (!event || !user) return
-    setSubmitting(true)
-    markSubmitted(slug)
-    setSubmitting(false)
-    alert('Submissão iniciada!')
-  }
 
+    // Redireciona para a página do formulário passando o ID do evento na URL
+    router.push(`/events/submission?eventoId=${event.id}`)
+  }
   const registered = isRegistered(slug)
   const submitted = isSubmitted(slug)
 
@@ -181,7 +179,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
             <p className="mt-3 text-sm text-muted-foreground">{event.location}</p>
 
             <div className="mt-4 overflow-hidden rounded-2xl border bg-muted">
-                <iframe
+              <iframe
                 title={`Mapa do evento ${event.title}`}
                 src={buildGoogleMapsEmbedUrl(event.location)}
                 className="h-80 w-full"

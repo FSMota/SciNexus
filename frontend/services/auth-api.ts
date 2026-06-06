@@ -18,16 +18,26 @@ export type AuthTokenResponse = {
   token_type: string
 }
 
+// 1. Função de erro turbinada para entender o FastAPI
 async function readErrorMessage(response: Response, fallback: string) {
   try {
-    const payload = (await response.json()) as { message?: string; detail?: string } | null
-    return payload?.message || payload?.detail || fallback
+    const payload = await response.json();
+    
+    // Se o FastAPI retornar um erro 422 de validação (detail como array)
+    if (payload?.detail && Array.isArray(payload.detail)) {
+      // Extrai apenas a mensagem de erro da API e junta com vírgula
+      return payload.detail.map((err: any) => err.msg).join(', ');
+    }
+    
+    // Erros normais (400, 401, 403, 409) onde detail é string
+    return payload?.message || payload?.detail || fallback;
   } catch {
-    return fallback
+    return fallback;
   }
 }
 
 export async function loginUser(payload: LoginPayload): Promise<AuthTokenResponse> {
+  // 2. Voltamos a enviar o payload bruto (JSON) exatamente como o seu Pydantic espera
   const response = await api.post('/auth/login', payload)
 
   if (!response.ok) {

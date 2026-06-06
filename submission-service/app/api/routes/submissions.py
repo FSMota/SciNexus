@@ -76,3 +76,21 @@ def listar_minhas_submissoes(
     
     submissoes = db.query(Submission).filter(Submission.autor_principal_id == autor_id).all()
     return submissoes
+
+
+@router.get("/submissoes/{submissao_id}", response_model=SubmissionRead)
+def obter_submissao(
+    submissao_id: int, 
+    db: Session = Depends(get_db),
+    autor_id: int = Depends(get_usuario_logado_id)
+):
+    """Rota para o Autor abrir os detalhes de um artigo específico que ele enviou"""
+    submissao = db.query(Submission).filter(
+        Submission.id == submissao_id,
+        Submission.autor_principal_id == autor_id # Trava de segurança!
+    ).first()
+
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada ou acesso negado.")
+        
+    return submissao

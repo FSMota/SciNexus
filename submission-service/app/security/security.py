@@ -2,6 +2,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 import os
+from dotenv import load_dotenv
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()
 
 # A mesma chave secreta e algoritmo que você usou no auth-service
 SECRET_KEY = os.getenv("JWT_SECRET", "sua_chave_secreta_super_segura")
