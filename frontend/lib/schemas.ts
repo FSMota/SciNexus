@@ -42,6 +42,32 @@ export const eventFormSchema = z.object({
   numero_participantes: z.number().int().min(0, 'O número de participantes deve ser maior ou igual a zero'),
 })
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_FILE_TYPES = ["application/pdf"];
+
+export const articleSubmissionFormSchema = z.object({
+  titulo: z.string().min(5, "O título deve ter pelo menos 5 caracteres."),
+  resumo: z.string()
+    .min(20, "O resumo deve ter pelo menos 20 caracteres.")
+    .max(5000, "O resumo atingiu o limite de tamanho."),
+  palavras_chave: z.string().min(3, "Insira pelo menos uma palavra-chave."),
+  // Validação específica para o input type="file"
+  arquivo_pdf: z
+    .any()
+    .refine((files) => files?.length === 1, "O envio do arquivo PDF é obrigatório.")
+    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, "O arquivo deve ter no máximo 5MB.")
+    .refine(
+      (files) => ACCEPTED_FILE_TYPES.includes(files?.[0]?.type),
+      "Apenas arquivos no formato .pdf são aceitos."
+    ),
+  agreeTerms: z.literal(true, {
+    message: "Você deve concordar com os termos de submissão.",
+  }),
+});
+
+// Extrai o tipo TypeScript automaticamente a partir do Schema Zod
+export type ArticleSubmissionFormData = z.infer<typeof articleSubmissionFormSchema>;
+
 export const backendEventSchema = z.object({
   id: z.number(),
   titulo: z.string(),

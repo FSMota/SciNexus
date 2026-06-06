@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.api.routes.submissions import router as submissions_router
 
 
 @asynccontextmanager
@@ -23,6 +24,7 @@ app = FastAPI(
 def read_root():
     return {"message": "Submission Service está rodando perfeitamente!"}
 
+app.include_router(submissions_router)
 
 @app.get("/health")
 def health_check():

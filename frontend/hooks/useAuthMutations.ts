@@ -8,6 +8,10 @@ export function useLoginMutation() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useCallback(() => {
+    setError(null)
+  }, [])
+
   const login = useCallback(async (payload: LoginPayload) => {
     setIsSubmitting(true)
     setError(null)
