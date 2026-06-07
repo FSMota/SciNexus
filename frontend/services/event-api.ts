@@ -1,6 +1,9 @@
 import type { CatalogEvent } from '@/lib/events'
 import { catalogEventSchema, eventRelationSchema } from '../lib/schemas'
 
+// 1. Aponta diretamente para o Microserviço de Eventos
+const EVENT_SERVICE_URL = process.env.NEXT_PUBLIC_EVENT_SERVICE_URL || 'http://localhost:8001'
+
 export type CreateEventPayload = {
   titulo: string
   categoria: CatalogEvent['category']
@@ -25,6 +28,16 @@ export type EventRelation = {
   updated_at: string
 }
 
+// 2. Função padronizada para injetar o Token JWT
+function getAuthHeaders(): HeadersInit {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+  return {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  }
+}
+
 async function readErrorMessage(response: Response, fallback: string) {
   try {
     const payload = (await response.json()) as { message?: string; detail?: string } | null
@@ -34,12 +47,26 @@ async function readErrorMessage(response: Response, fallback: string) {
   }
 }
 
-export async function createEvent(payload: CreateEventPayload): Promise<CatalogEvent> {
-  const response = await fetch('/api/events', {
+export async function updateEvent(eventId: number, payload: CreateEventPayload) {
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/${eventId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Falha ao atualizar o evento'))
+  }
+
+  // MUDANÇA AQUI: Retorne apenas o JSON bruto ou ignore o parse do Zod para essa rota
+  return response.json() 
+}
+
+// Faça o mesmo para a função de criar:
+export async function createEvent(payload: CreateEventPayload) {
+  const response = await fetch(`${EVENT_SERVICE_URL}/events`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   })
 
@@ -47,15 +74,15 @@ export async function createEvent(payload: CreateEventPayload): Promise<CatalogE
     throw new Error(await readErrorMessage(response, 'Falha ao criar evento'))
   }
 
-  return catalogEventSchema.parse(await response.json())
+  // MUDANÇA AQUI: Retorne apenas o JSON bruto
+  return response.json() 
 }
 
+
 export async function subscribeToEvent(slug: string, userId: number): Promise<EventRelation> {
-  const response = await fetch(`/api/events/${slug}/subscriptions`, {
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/${slug}/subscriptions`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ user_id: userId }),
   })
 
@@ -66,25 +93,11 @@ export async function subscribeToEvent(slug: string, userId: number): Promise<Ev
   return eventRelationSchema.parse(await response.json())
 }
 
-export async function updateEvent(eventId: number, payload: CreateEventPayload): Promise<CatalogEvent> {
-  const response = await fetch(`/api/events/${eventId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  })
-
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Falha ao atualizar o evento'))
-  }
-
-  return catalogEventSchema.parse(await response.json())
-}
 
 export async function deleteEvent(eventId: number): Promise<void> {
-  const response = await fetch(`/api/events/${eventId}`, {
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/${eventId}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   })
 
   if (!response.ok) {

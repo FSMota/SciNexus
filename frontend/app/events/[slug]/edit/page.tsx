@@ -9,6 +9,8 @@ import { TopNav } from '@/components/navigation/top-nav'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import { EventForm } from '@/components/forms/EventForm'
+import { EventFormValues } from '@/lib/schemas' // Importe o tipo EventFormValues
+import { toast } from 'sonner'
 
 export default function EditEventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -26,23 +28,65 @@ export default function EditEventPage({ params }: { params: Promise<{ slug: stri
     setIsDeleting(true)
     try {
       await deleteEvent(event.id)
-      alert('Evento excluído com sucesso!')
+      toast.success("Evento excluído", {
+        description: "O evento foi removido permanentemente com sucesso.",
+      })
       router.push('/dashboard')
     } catch (err: any) {
-      alert(err.message || 'Falha ao excluir o evento.')
+      toast.error("Erro ao excluir", {
+        description: err.message || 'Falha ao excluir o evento.',
+      })
       setIsDeleting(false)
     }
   }
 
-  // Função passada como prop para o seu formulário
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: EventFormValues) => {
     try {
-      await updateEvent(event.id, data)
-      alert('Evento atualizado com sucesso!')
+      // Processa a conversão de array de tags se necessário (baseado em como o updateEvent espera receber)
+      const payload = {
+        ...data,
+        tags: typeof data.tags === 'string' ? data.tags.split(',').map(t => t.trim()) : data.tags,
+        data_fim: data.data_fim && data.data_fim.trim() !== "" ? data.data_fim : null,
+      }
+      
+      await updateEvent(event.id, payload as any) // O "as any" aqui evita atritos com o CreateEventPayload, já tratamos a tipagem no payload
+      toast.success("Evento atualizado", {
+        description: "As informações do evento foram atualizadas com sucesso.",
+      })
       router.push('/dashboard')
     } catch (err: any) {
-      alert(err.message || 'Falha ao atualizar o evento.')
+      toast.error("Erro ao atualizar", {
+        description: err.message || 'Falha ao atualizar o evento.',
+      })
     }
+  }
+
+  // Função para garantir que a data fique no formato YYYY-MM-DD
+  const formatForDateInput = (dateString?: string | null) => {
+    if (!dateString) return '';
+    // Pega apenas os 10 primeiros caracteres: "2026-10-15" de "2026-10-15T00:00:00"
+    return dateString.substring(0, 10);
+  }
+
+  // Mapeamos os dados do CatalogEvent para o formato esperado pelo formulário
+  const formattedInitialData: Partial<EventFormValues> = {
+    titulo: event.title,
+    categoria: event.category as any,
+    
+    // APLIQUE A FORMATAÇÃO AQUI:
+    // Se data_inicio não existir (por cache antigo), usamos sortDate como fallback
+    data_inicio: formatForDateInput((event as any).data_inicio || event.sortDate), 
+    data_fim: formatForDateInput((event as any).data_fim),
+    
+    local: event.location,
+    status: (event.status === 'inscrições abertas' || event.status === 'inscrições encerradas') 
+             ? event.status 
+             : 'inscrições abertas',
+    submissoes_abertas: (event as any).submissionsOpen ?? true, // Atenção: no catalogSchema o nome é submissionsOpen!
+    resumo: event.summary,
+    tags: Array.isArray(event.tags) ? event.tags.join(', ') : event.tags,
+    // Tratando a conversão de attendees (string no catalog) para numero (no form)
+    numero_participantes: parseInt(event.attendees) || 0,
   }
 
   return (
@@ -77,12 +121,8 @@ export default function EditEventPage({ params }: { params: Promise<{ slug: stri
         </div>
 
         <div className="bg-card border rounded-2xl p-6 shadow-sm">
-           {/* Substitua o texto abaixo pela chamada do seu formulário adaptado */}
-           {/* <EventForm initialData={event} onSubmit={handleUpdate} isEditing={true} /> */}
-           
-           <p className="text-center text-muted-foreground py-10">
-             <EventForm initialData={event} onSubmit={handleUpdate} isEditing={true} />
-           </p>
+           {/* Repare que removi a prop isEditing={true} pois ela não existe na interface EventFormProps */}
+           <EventForm initialData={formattedInitialData} onSubmit={handleUpdate} submitLabel="Atualizar Evento" />
         </div>
       </main>
     </div>

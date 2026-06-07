@@ -112,6 +112,9 @@ export const catalogEventSchema = z.object({
   highlight: z.boolean(),
   summary: z.string(),
   tags: z.array(z.string()),
+  // ADICIONE ESTAS DUAS LINHAS PARA SALVAR OS DADOS REAIS DO BANCO:
+  data_inicio: z.string().optional(),
+  data_fim: z.string().nullable().optional(),
 })
 
 export const catalogEventArraySchema = z.array(catalogEventSchema)

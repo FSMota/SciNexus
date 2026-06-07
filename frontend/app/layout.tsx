@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Space_Grotesk } from "next/font/google";
 import "../styles.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
@@ -30,7 +31,9 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${dmSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <div className="flex-1">{children}</div>
+        <div className="flex-1">{children}
+          <Toaster richColors position="top-right" />
+        </div>
         <footer className="border-t border-border/70 bg-background px-4 py-8 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             © 2026 SciNexus · Plataforma de eventos científicos

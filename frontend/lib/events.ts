@@ -25,6 +25,8 @@ export type CatalogEvent = {
   date: string
   sortDate: string
   location: string
+  data_inicio?: string; // Opcional para não quebrar o catálogo
+  data_fim?: string | null;
   status: string
   submissionsOpen: boolean
   attendees: string
@@ -35,13 +37,15 @@ export type CatalogEvent = {
 
 const monthLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
-export function slugify(text: string) {
+export function slugify(text?: string) {
+  // Se o texto vier vazio ou undefined, retorna uma string vazia e evita o erro
+  if (!text) return '' 
+
   return text
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
+    // ... restante da sua função (provavelmente replace de espaços por hifens)
 }
 
 function formatDate(dateValue: string) {
@@ -84,18 +88,56 @@ export function mapBackendEvent(event: BackendEvent): CatalogEvent {
   }
 }
 
+// Importe ou defina a URL do serviço e a função de headers no topo do arquivo
+const EVENT_SERVICE_URL = process.env.NEXT_PUBLIC_EVENT_SERVICE_URL || 'http://localhost:8001'
+
+function getAuthHeaders(): HeadersInit {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+  return {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  }
+}
+
 export async function fetchCatalogEvents(): Promise<CatalogEvent[]> {
-  const response = await fetch('/api/events', { cache: 'no-store' })
+  const response = await fetch(`${EVENT_SERVICE_URL}/events`, { 
+    headers: getAuthHeaders(),
+    cache: 'no-store' 
+  })
 
   if (!response.ok) {
     throw new Error('Não foi possível carregar os eventos')
   }
 
-  return (await response.json()) as CatalogEvent[]
+  const rawEvents = await response.json()
+
+  // Fazemos o map para traduzir a lista toda
+  return rawEvents.map((rawData: any) => ({
+    id: rawData.id,
+    // ATENÇÃO AQUI: Passamos rawData.titulo para o slugify, pois é o nome do campo no Python!
+    slug: rawData.slug || slugify(rawData.titulo), 
+    title: rawData.titulo,
+    category: rawData.categoria,
+    date: new Date(rawData.data_inicio).toLocaleDateString('pt-BR'),
+    sortDate: rawData.data_inicio,
+    location: rawData.local,
+    status: rawData.status,
+    submissionsOpen: rawData.submissoes_abertas,
+    attendees: String(rawData.numero_participantes || 0),
+    highlight: rawData.destaque || false,
+    summary: rawData.resumo,
+    tags: rawData.tags,
+  }))
 }
 
+
 export async function fetchCatalogEventBySlug(slug: string): Promise<CatalogEvent | null> {
-  const response = await fetch(`/api/events/${slug}`, { cache: 'no-store' })
+  // 1. Bate direto no FastAPI
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/${slug}`, { 
+    headers: getAuthHeaders(),
+    cache: 'no-store' 
+  })
 
   if (response.status === 404) {
     return null
@@ -105,5 +147,33 @@ export async function fetchCatalogEventBySlug(slug: string): Promise<CatalogEven
     throw new Error('Não foi possível carregar o evento')
   }
 
-  return (await response.json()) as CatalogEvent
+  // Pegamos a resposta crua em português gerada pelo seu modelo Pydantic
+  const rawData = await response.json()
+
+  // 2. Traduzimos os campos para os cards do catálogo E preservamos as datas brutas!
+  return {
+    id: rawData.id,
+    slug: rawData.slug || slug, // Fallback de segurança
+    title: rawData.titulo,
+    category: rawData.categoria,
+    
+    // Para exibição no catálogo (Ex: 15/10/2026). Adapte caso use outra formatação.
+    date: new Date(rawData.data_inicio).toLocaleDateString('pt-BR'), 
+    sortDate: rawData.data_inicio,
+    
+    location: rawData.local,
+    status: rawData.status,
+    submissionsOpen: rawData.submissoes_abertas,
+    attendees: String(rawData.numero_participantes || 0), // CatalogEvent espera string aqui
+    highlight: rawData.destaque || false,
+    summary: rawData.resumo,
+    tags: rawData.tags,
+
+    // === A MÁGICA PARA O FORMULÁRIO DE EDIÇÃO ===
+    // Esses campos não são exigidos pelo catálogo, mas viajam "de carona" no objeto 
+    // para que a sua página de edição possa ler os valores exatos!
+    data_inicio: rawData.data_inicio,
+    data_fim: rawData.data_fim,
+
+  } as CatalogEvent
 }

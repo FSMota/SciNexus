@@ -26,3 +26,29 @@ export async function GET(_: Request, { params }: { params: Promise<{ slug: stri
     return NextResponse.json({ message: 'Falha ao carregar evento' }, { status: 500 })
   }
 }
+
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const body = await request.json();
+    
+    // Repassa para o seu backend FastAPI (ajuste a porta/URL conforme o seu setup de eventos)
+    const backendResponse = await fetch(`${EVENT_SERVICE_URL}/events/${params.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const data = await backendResponse.json();
+    return NextResponse.json(data, { status: backendResponse.status });
+  } catch (error) {
+    return NextResponse.json({ message: 'Erro ao atualizar evento' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  // Faz o proxy do DELETE para o backend da mesma forma
+  const backendResponse = await fetch(`${EVENT_SERVICE_URL}/events/${params.id}`, {
+    method: 'DELETE',
+  });
+  return new NextResponse(null, { status: backendResponse.status });
+}
