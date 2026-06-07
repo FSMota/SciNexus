@@ -6,11 +6,20 @@ from app.database import get_db
 from app.models.event import Event
 from app.schemas.event import EventCreate, EventRead
 
+# 1. Adicione estas importações para ter acesso à tabela de relações e aos Enums
+from app.models.event_relation import EventUserRelation, EventRelationRole, EventRelationStatus
+
 router = APIRouter(prefix="/events", tags=["events"])
 
 
 @router.post("", response_model=EventRead, status_code=201)
-def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
+def create_event(
+    payload: EventCreate, 
+    db: Session = Depends(get_db)
+    # current_user = Depends(get_current_user) # 💡 DICA: Adicione sua dependência de autenticação aqui
+) -> Event:
+    
+    # 1. Cria o evento
     event = Event(
         titulo=payload.titulo,
         categoria=payload.categoria,
@@ -25,8 +34,27 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
     )
     db.add(event)
     db.commit()
-    db.refresh(event)
+    db.refresh(event) # Aqui o evento ganha um ID (event.id)
+
+    # ---------------------------------------------------------
+    # 2. SALVA O CRIADOR COMO ORGANIZADOR
+    # ---------------------------------------------------------
+    # ⚠️ ATENÇÃO: Aqui você precisa passar o ID do usuário real!
+    # Se você usar autenticação, será algo como `current_user.id`.
+    # Se você enviar o ID pelo frontend, será algo como `payload.criador_id`.
+    
+    organizer_relation = EventUserRelation(
+        event_id=event.id,
+        user_id=payload.criador_id, # <-- MUDE AQUI! Pegue o ID do payload
+        role=EventRelationRole.organizador,
+        status=EventRelationStatus.ativo
+    )
+    db.add(organizer_relation)
+    db.commit()
+    # ---------------------------------------------------------
+    
     return event
+
 
 @router.get("", response_model=list[EventRead])
 def getAllEvents(db: Session = Depends(get_db)):

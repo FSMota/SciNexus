@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useEventBySlug } from '@/hooks/useEvents'
 import { useSubscribeToEvent } from '@/hooks/useEventMutations'
 import { useEventParticipation } from '@/hooks/useEventParticipation'
+import { ReviewerCTA } from '@/components/events/reviewer-cta'
 
 const bannerGradients: Record<CategoryName, string> = {
   tecnologia: 'from-sky-600 via-blue-600 to-cyan-400',
@@ -207,6 +208,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
             ))}
           </div>
         </div>
+
+        <ReviewerCTA eventId={event.id} />
 
         <div className="flex items-center gap-3">
           <Link href="/events">

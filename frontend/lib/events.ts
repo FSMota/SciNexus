@@ -38,14 +38,16 @@ export type CatalogEvent = {
 const monthLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
 export function slugify(text?: string) {
-  // Se o texto vier vazio ou undefined, retorna uma string vazia e evita o erro
-  if (!text) return '' 
+  if (!text) return ''
 
   return text
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    // ... restante da sua função (provavelmente replace de espaços por hifens)
+    .normalize('NFD')                      // Decompõe caracteres com acento
+    .replace(/[\u0300-\u036f]/g, '')       // Remove os acentos
+    .replace(/[^a-z0-9\s-]/g, '')          // Remove símbolos e caracteres especiais (guarda apenas letras, números e espaços)
+    .trim()                                // Remove espaços inúteis no início e fim
+    .replace(/\s+/g, '-')                  // Substitui um ou mais espaços por um único hífen (-)
+    .replace(/-+/g, '-')                   // Evita que fiquem hifens duplicados seguidos (---)
 }
 
 function formatDate(dateValue: string) {

@@ -8,7 +8,8 @@ export type CreateEventPayload = {
   titulo: string
   categoria: CatalogEvent['category']
   data_inicio: string
-  data_fim: string | null
+  data_fim: string | null,
+  criador_id: number,
   local: string
   status: string
   submissoes_abertas: boolean
@@ -103,4 +104,76 @@ export async function deleteEvent(eventId: number): Promise<void> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, 'Falha ao excluir o evento'))
   }
+}
+
+// Atualize ou adicione no seu event-api.ts
+export async function getMyReviewerRequests(userId: number): Promise<EventRelation[]> {
+  // Chamamos a nova rota: /events/user/{user_id}?role=revisor
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/user/${userId}?role=revisor`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Falha ao carregar histórico de revisor'))
+  }
+
+  return response.json()
+}
+
+// 1. Solicitar vaga de revisor (Usa a sua rota POST /review-applications)
+export async function requestReviewerRole(eventId: number, userId: number): Promise<EventRelation> {
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/${eventId}/review-applications`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    // O seu Pydantic (ReviewerApplicationCreate) espera o user_id no corpo
+    body: JSON.stringify({ user_id: userId }), 
+  })
+
+  if (!response.ok) throw new Error(await readErrorMessage(response, 'Falha ao solicitar vaga'))
+  return response.json()
+}
+
+// 2. Checar se já solicitou (Usa a sua rota GET de listagem com filtros na query string!)
+export async function checkReviewerStatus(eventId: number, userId: number): Promise<boolean> {
+  // A sua rota list_event_relations aceita query params, perfeito para isso:
+  const response = await fetch(
+    `${EVENT_SERVICE_URL}/events/${eventId}/relations?user_id=${userId}&role=revisor`, 
+    { headers: getAuthHeaders() }
+  )
+  
+  if (!response.ok) return false
+  const data = await response.json()
+  
+  // Se o array voltar com algum item, significa que a relação existe!
+  return data.length > 0 
+}
+
+// 3. (Para a tela do Organizador) Buscar todos os candidatos de um evento
+export async function getEventReviewerCandidates(eventId: number): Promise<EventRelation[]> {
+  const response = await fetch(
+    `${EVENT_SERVICE_URL}/events/${eventId}/relations?role=revisor`, // Traz todos, independente do user_id
+    { headers: getAuthHeaders() }
+  )
+  if (!response.ok) throw new Error('Falha ao buscar candidatos')
+  return response.json()
+}
+
+// 4. (Para a tela do Organizador) Aprovar ou Rejeitar
+export async function decideReviewerRole(
+  eventId: number, 
+  candidateUserId: number, 
+  organizerUserId: number, 
+  decision: 'approve' | 'reject'
+): Promise<EventRelation> {
+  // Bate nas suas rotas /{user_id}/approve ou /{user_id}/reject
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/${eventId}/review-applications/${candidateUserId}/${decision}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    // O seu schema ReviewerDecisionCreate espera quem está aprovando
+    body: JSON.stringify({ organizer_user_id: organizerUserId }), 
+  })
+
+  if (!response.ok) throw new Error(await readErrorMessage(response, `Falha ao ${decision === 'approve' ? 'aprovar' : 'rejeitar'} candidato`))
+  return response.json()
 }

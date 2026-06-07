@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { slugify } from '@/lib/events'
 import { useEvents } from '@/hooks/useEvents'
 import { getMySubmissions } from '@/services/submission-api'
+// 👇 Importação hipotética: você precisará criar essa função no event-api.ts
+import { getMyReviewerRequests } from '@/services/event-api' 
 
 export function SessionTabs() {
   const { user, isLoading, isAuthenticated } = useAuth()
@@ -15,24 +17,35 @@ export function SessionTabs() {
   
   // Estado do mock de RBAC local
   const [data, setData] = useState<any>({})
-  // Novo estado para as submissões reais do backend
+  
+  // Estados para os dados reais do backend
   const [realSubmissions, setRealSubmissions] = useState<any[]>([])
+  const [reviewerRequests, setReviewerRequests] = useState<any[]>([]) // <-- Novo estado
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // Adicionamos a checagem do 'user' aqui para garantir que temos o ID
+    if (isAuthenticated && user) {
       const key = 'scinexus:rbac'
       const parsed = JSON.parse(localStorage.getItem(key) || '{}')
       setData(parsed)
 
-      // Uso limpo do novo serviço isolado
+      // Busca Submissões
       getMySubmissions()
         .then(dados => setRealSubmissions(dados))
         .catch(err => {
-          console.error(err.message)
+          console.error('Erro ao buscar submissões:', err.message)
           setRealSubmissions([])
         })
+
+      // 👇 Busca Solicitações de Revisor passando o ID real do usuário
+      getMyReviewerRequests(user.id)
+        .then(dados => setReviewerRequests(dados))
+        .catch(err => {
+          console.error('Erro ao buscar solicitações de revisor:', err.message)
+          setReviewerRequests([])
+        })
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, user]) // <-- Adicione 'user' no array de dependências
 
   const myRegistrations = useMemo(() => {
     if (!user) return []
@@ -57,7 +70,7 @@ export function SessionTabs() {
     )
   }
 
-  // 💡 ESTRATÉGIA: Adicionamos o `renderItem` para customizar cada lista!
+  // 💡 ESTRATÉGIA: Array de abas com o novo item "revisor"
   const tabs = [
     { 
       key: 'registrations', 
@@ -65,7 +78,7 @@ export function SessionTabs() {
       items: myRegistrations, 
       emptyText: 'Nenhuma inscrição encontrada.',
       renderItem: (e: any) => (
-        <li key={e.id} className="flex items-center justify-between border-b pb-3">
+        <li key={`reg-${e.id}`} className="flex items-center justify-between border-b pb-3">
           <div className="text-left">
             <div className="font-medium text-foreground">{e.title}</div>
             <div className="text-xs text-muted-foreground">{e.date} · {e.location}</div>
@@ -77,18 +90,15 @@ export function SessionTabs() {
     { 
       key: 'submissions', 
       title: 'Minhas submissões', 
-      items: realSubmissions, // <-- Usando os dados reais do backend!
+      items: realSubmissions, 
       emptyText: 'Nenhuma submissão encontrada.',
       renderItem: (sub: any) => {
-        // Busca o evento associado para exibir o nome
         const eventoRelacionado = events.find(e => e.id === sub.evento_id)
-        
         return (
-          <li key={sub.id} className="flex items-center justify-between border-b pb-3">
+          <li key={`sub-${sub.id}`} className="flex items-center justify-between border-b pb-3">
             <div className="text-left">
               <div className="font-medium text-foreground">{sub.titulo}</div>
               <div className="flex items-center gap-2 mt-1">
-                {/* Badge de Status */}
                 <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                   {sub.status}
                 </span>
@@ -97,10 +107,47 @@ export function SessionTabs() {
                 </span>
               </div>
             </div>
-            {/* O link aponta para a nova tela de visualização do artigo */}
             <Link href={`/submissions/${sub.id}`} className="text-sm font-medium text-primary hover:underline">
               Ver Artigo
             </Link>
+          </li>
+        )
+      }
+    },
+    // 👇 NOVA ABA: Histórico de Revisor
+    { 
+      key: 'revisor', 
+      title: 'Histórico de Revisor', 
+      items: reviewerRequests, 
+      emptyText: 'Você ainda não enviou solicitações para ser revisor.',
+      renderItem: (req: any) => {
+        const eventoRelacionado = events.find(e => e.id === req.event_id)
+        
+        // Estilização dinâmica do badge baseada no status
+        let badgeColor = "bg-yellow-500/10 text-yellow-600" // pendente
+        if (req.status === 'ativo') badgeColor = "bg-green-500/10 text-green-600"
+        if (req.status === 'rejeitado') badgeColor = "bg-destructive/10 text-destructive"
+
+        return (
+          <li key={`rev-${req.id}`} className="flex items-center justify-between border-b pb-3">
+            <div className="text-left">
+              <div className="font-medium text-foreground">
+                {eventoRelacionado?.title || `Evento #${req.event_id}`}
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`${badgeColor} text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider`}>
+                  {req.status}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Solicitado em {new Date(req.created_at).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+            </div>
+            {req.status === 'ativo' && (
+               <span className="text-sm font-medium text-muted-foreground">
+                 Aprovado
+               </span>
+            )}
           </li>
         )
       }
@@ -111,7 +158,7 @@ export function SessionTabs() {
       items: myEvents, 
       emptyText: 'Nenhum evento publicado por você.',
       renderItem: (e: any) => (
-        <li key={e.id} className="flex items-center justify-between border-b pb-3">
+        <li key={`evt-${e.id}`} className="flex items-center justify-between border-b pb-3">
           <div className="text-left">
             <div className="font-medium text-foreground">{e.title}</div>
             <div className="text-xs text-muted-foreground">{e.date} · {e.location}</div>
@@ -125,22 +172,23 @@ export function SessionTabs() {
   ]
 
   return (
-    <div className="rounded-lg bg-card p-6 shadow-sm border border-border/50 mb-6">
+    <div className="rounded-lg bg-card p-6 shadow-sm border border-border/50 mb-6 overflow-hidden">
       <Tabs defaultValue={tabs[0].key}>
-        <TabsList className="mb-4">
-          {tabs.map((t) => (
-            <TabsTrigger key={t.key} value={t.key}>{`${t.title} (${t.items.length})`}</TabsTrigger>
-          ))}
-        </TabsList>
+        {/* Scroll horizontal permite que as abas não quebrem em telas pequenas */}
+        <div className="w-full overflow-x-auto pb-2">
+          <TabsList className="mb-2 min-w-max">
+            {tabs.map((t) => (
+              <TabsTrigger key={t.key} value={t.key}>{`${t.title} (${t.items.length})`}</TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         {tabs.map((t) => (
-          <TabsContent key={t.key} value={t.key} className="text-center">
-            {/* Verifica com segurança se é um array e se está vazio */}
+          <TabsContent key={t.key} value={t.key} className="text-center focus-visible:outline-none">
             {Array.isArray(t.items) && t.items.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">{t.emptyText}</p>
+              <p className="text-sm text-muted-foreground py-8">{t.emptyText}</p>
             ) : (
-              <ul className="space-y-4 mt-2">
-                {/* Se for array de verdade, aí sim executa o map */}
+              <ul className="space-y-4 mt-4">
                 {Array.isArray(t.items) && t.items.map((item: any) => t.renderItem(item))}
               </ul>
             )}

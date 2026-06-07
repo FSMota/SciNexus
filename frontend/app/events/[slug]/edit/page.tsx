@@ -11,6 +11,8 @@ import { ArrowLeft, Trash2 } from 'lucide-react'
 import { EventForm } from '@/components/forms/EventForm'
 import { EventFormValues } from '@/lib/schemas' // Importe o tipo EventFormValues
 import { toast } from 'sonner'
+import { ReviewerRequestsManager } from '@/components/events/reviewer-request-manager'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function EditEventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -89,41 +91,52 @@ export default function EditEventPage({ params }: { params: Promise<{ slug: stri
     numero_participantes: parseInt(event.attendees) || 0,
   }
 
-  return (
+return (
     <div className="min-h-screen bg-background text-foreground">
       <TopNav />
       <main className="mx-auto max-w-4xl px-4 py-8">
+        
+        {/* Cabeçalho com o botão de voltar e título (mantenha o que você já tem) */}
         <div className="mb-8 space-y-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" className="pl-0 text-muted-foreground hover:text-primary">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Meus Dados
-            </Button>
-          </Link>
-
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b pb-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Gerenciar Evento</h1>
-              <p className="text-muted-foreground mt-1">
-                Atualize as informações ou encerre as inscrições do evento <strong className="text-foreground">{event.title}</strong>.
-              </p>
-            </div>
-            
+           {/* ... */}
+          <h1 className="text-2xl font-bold">Editar Evento</h1>
+           {/* alinhar o botão de excluir na ponta direita */}
+            <div className="flex justify-end">
             <Button 
               variant="destructive" 
               onClick={handleDelete} 
               disabled={isDeleting}
               className="shrink-0"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2 className="mr-2 h-4 w-4 " />
               {isDeleting ? 'Excluindo...' : 'Excluir Evento'}
             </Button>
           </div>
         </div>
 
-        <div className="bg-card border rounded-2xl p-6 shadow-sm">
-           {/* Repare que removi a prop isEditing={true} pois ela não existe na interface EventFormProps */}
-           <EventForm initialData={formattedInitialData} onSubmit={handleUpdate} submitLabel="Atualizar Evento" />
-        </div>
+        
+
+        {/* 2. Substitua o formulário direto pelo container de Tabs */}
+        <Tabs defaultValue="detalhes" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 max-w-100 mb-6">
+            <TabsTrigger value="detalhes">Configurações</TabsTrigger>
+            <TabsTrigger value="revisores">Candidatos a Revisor</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="detalhes" className="focus-visible:outline-none">
+            <div className="bg-card border rounded-2xl p-6 shadow-sm">
+               <EventForm initialData={formattedInitialData} onSubmit={handleUpdate} submitLabel="Atualizar Evento" />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="revisores" className="focus-visible:outline-none">
+            <div className="bg-card border rounded-2xl p-6 shadow-sm">
+               {/* Injetamos o gerenciador de aprovações aqui */}
+               <ReviewerRequestsManager eventId={event.id} />
+            </div>
+          </TabsContent>
+        </Tabs>
+
       </main>
     </div>
   )

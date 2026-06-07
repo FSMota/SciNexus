@@ -170,3 +170,21 @@ def reject_reviewer(
     db.commit()
     db.refresh(relation)
     return relation
+
+
+# Adicione esta rota no seu event_relations.py
+@router.get("/user/{user_id}", response_model=list[EventRelationRead])
+def list_user_relations_across_events(
+    user_id: int,
+    role: EventRelationRole | None = None,
+    status: EventRelationStatus | None = None,
+    db: Session = Depends(get_db),
+) -> list[EventUserRelation]:
+    query = db.query(EventUserRelation).filter(EventUserRelation.user_id == user_id)
+
+    if role is not None:
+        query = query.filter(EventUserRelation.role == role)
+    if status is not None:
+        query = query.filter(EventUserRelation.status == status)
+
+    return query.order_by(EventUserRelation.created_at.desc()).all()

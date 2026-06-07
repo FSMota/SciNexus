@@ -53,8 +53,14 @@ export default function NewEventPage() {
 
   const handleCreate = async (values: EventFormValues) => {
   // Aqui você chama a lógica de criação do evento com os 'values' já validados
+  if (!user) {
+    setError('Usuário não autenticado')
+    return
+  }
+
   await createEvent({
     ...values,
+    criador_id: user.id,
     tags: typeof values.tags === 'string' ? values.tags.split(',').map(t => t.trim()) : values.tags,
     data_fim: values.data_fim && values.data_fim.trim() !== "" ? values.data_fim : null,
   });
