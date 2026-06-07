@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
+import os
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from app.database import get_db, Base, engine
@@ -22,6 +24,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# 2. Garanta que a pasta existe antes de montar
+os.makedirs("uploads/pdfs", exist_ok=True)
+
+# 3. Monte a pasta para a web!
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+    
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # Permite requisições de qualquer porta (ideal para dev local)

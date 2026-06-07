@@ -1,5 +1,4 @@
 import type { CatalogEvent } from '@/lib/events'
-import { catalogEventSchema, eventRelationSchema } from '../lib/schemas'
 
 // 1. Aponta diretamente para o Microserviço de Eventos
 const EVENT_SERVICE_URL = process.env.NEXT_PUBLIC_EVENT_SERVICE_URL || 'http://localhost:8001'
@@ -80,18 +79,18 @@ export async function createEvent(payload: CreateEventPayload) {
 }
 
 
-export async function subscribeToEvent(slug: string, userId: number): Promise<EventRelation> {
-  const response = await fetch(`${EVENT_SERVICE_URL}/events/${slug}/subscriptions`, {
+// Adicione isto no seu services/event-api.ts
+export async function subscribeToEvent(eventId: number, userId: number): Promise<void> {
+  // Bate na rota de subscrição do seu FastAPI (definida no event_relation.py)
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/${eventId}/subscriptions`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ user_id: userId }),
+    body: JSON.stringify({ user_id: userId }), // O payload SubscriptionCreate espera isso
   })
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, 'Falha ao realizar inscrição'))
   }
-
-  return eventRelationSchema.parse(await response.json())
 }
 
 
@@ -175,5 +174,33 @@ export async function decideReviewerRole(
   })
 
   if (!response.ok) throw new Error(await readErrorMessage(response, `Falha ao ${decision === 'approve' ? 'aprovar' : 'rejeitar'} candidato`))
+  return response.json()
+}
+
+export async function getMyOrganizedEvents(userId: number): Promise<EventRelation[]> {
+  // Busca todas as relações do usuário onde o cargo é 'organizador'
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/user/${userId}?role=organizador`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    throw new Error('Falha ao carregar eventos organizados')
+  }
+
+  return response.json()
+}
+
+export async function getMyRegistrations(userId: number): Promise<EventRelation[]> {
+  // Busca todas as relações do usuário onde o cargo é 'ouvinte'
+  const response = await fetch(`${EVENT_SERVICE_URL}/events/user/${userId}?role=ouvinte`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    throw new Error('Falha ao carregar inscrições')
+  }
+
   return response.json()
 }

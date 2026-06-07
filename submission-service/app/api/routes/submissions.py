@@ -79,15 +79,50 @@ def listar_minhas_submissoes(
 def obter_submissao(
     submissao_id: int, 
     db: Session = Depends(get_db),
-    autor_id: int = Depends(get_usuario_logado_id)
+    usuario_logado_id: int = Depends(get_usuario_logado_id) # Apenas exige que esteja logado
 ):
-    """Rota para o Autor abrir os detalhes de um artigo específico que ele enviou"""
-    submissao = db.query(Submission).filter(
-        Submission.id == submissao_id,
-        Submission.autor_principal_id == autor_id # Trava de segurança!
-    ).first()
+    """Rota para abrir os detalhes de um artigo específico (Acesso para Autor e Revisor)"""
+    
+    # Para o MVP, buscamos apenas pelo ID da submissão para permitir que o revisor acesse
+    submissao = db.query(Submission).filter(Submission.id == submissao_id).first()
 
     if not submissao:
-        raise HTTPException(status_code=404, detail="Submissão não encontrada ou acesso negado.")
+        raise HTTPException(status_code=404, detail="Submissão não encontrada.")
         
     return submissao
+
+from pydantic import BaseModel
+
+class ReviewPayload(BaseModel):
+    feedback: str
+    status: str  # Espera "aprovado" ou "rejeitado"
+
+@router.patch("/{submission_id}/iniciar-revisao")
+def start_review(submission_id: int, db: Session = Depends(get_db)):
+    """Muda o status para 'EM_REVISAO' quando o revisor abre o artigo"""
+    submission = db.query(Submission).filter(Submission.id == submission_id).first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    
+    # MUDEI AQUI: de "pendente" para "SUBMETIDO", e para "EM_REVISAO"
+    if submission.status == "SUBMETIDO":
+        submission.status = "EM_REVISAO"
+        db.commit()
+        db.refresh(submission)
+        
+    return submission
+
+@router.patch("/{submission_id}/avaliar")
+def review_submission(submission_id: int, payload: ReviewPayload, db: Session = Depends(get_db)):
+    """Salva o feedback e o status final do artigo"""
+    submission = db.query(Submission).filter(Submission.id == submission_id).first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    
+    # MUDEI AQUI: Usa o .upper() para forçar o status ('aprovado' -> 'APROVADO')
+    submission.status = payload.status.upper()
+    submission.feedback = payload.feedback
+    db.commit()
+    db.refresh(submission)
+    
+    return submission

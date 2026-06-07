@@ -20,10 +20,8 @@ class Submission(Base):
     autor_principal_id = Column(Integer, nullable=False, index=True)
     titulo = Column(String, nullable=False, index=True)
     resumo = Column(Text, nullable=False)
-    
-    # MUDE AQUI: Use a mesma estrutura limpa do módulo de events
     palavras_chave = Column(JSON().with_variant(SQLiteJSON, "sqlite"), nullable=False, default=list)
-    
+    feedback = Column(Text, nullable=True)
     arquivo_pdf_path = Column(String, nullable=False)
     status = Column(
         SQLEnum(

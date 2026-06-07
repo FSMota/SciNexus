@@ -36,5 +36,6 @@ class SubmissionRead(SubmissionBase):
 
     id: int
     status: SubmissionStatus
+    feedback: str | None = None
     created_at: datetime
     updated_at: datetime

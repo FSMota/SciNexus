@@ -6,8 +6,9 @@ from app.database import get_db
 from app.models.event import Event
 from app.schemas.event import EventCreate, EventRead
 
-# 1. Adicione estas importações para ter acesso à tabela de relações e aos Enums
+# Certifique-se de importar os modelos e Enums da relação
 from app.models.event_relation import EventUserRelation, EventRelationRole, EventRelationStatus
+from app.security import get_usuario_logado_id
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -15,11 +16,11 @@ router = APIRouter(prefix="/events", tags=["events"])
 @router.post("", response_model=EventRead, status_code=201)
 def create_event(
     payload: EventCreate, 
-    db: Session = Depends(get_db)
-    # current_user = Depends(get_current_user) # 💡 DICA: Adicione sua dependência de autenticação aqui
+    db: Session = Depends(get_db),
+    usuario_logado_id: int = Depends(get_usuario_logado_id)
 ) -> Event:
     
-    # 1. Cria o evento
+    # 1. Cria o evento estritamente com os campos contidos na tabela "events"
     event = Event(
         titulo=payload.titulo,
         categoria=payload.categoria,
@@ -34,25 +35,19 @@ def create_event(
     )
     db.add(event)
     db.commit()
-    db.refresh(event) # Aqui o evento ganha um ID (event.id)
+    db.refresh(event) # O banco gera o id aqui (event.id)
 
-    # ---------------------------------------------------------
-    # 2. SALVA O CRIADOR COMO ORGANIZADOR
-    # ---------------------------------------------------------
-    # ⚠️ ATENÇÃO: Aqui você precisa passar o ID do usuário real!
-    # Se você usar autenticação, será algo como `current_user.id`.
-    # Se você enviar o ID pelo frontend, será algo como `payload.criador_id`.
-    
+    # 2. Registra o criador como "organizador" ativo na tabela "event_user_relations"
     organizer_relation = EventUserRelation(
         event_id=event.id,
-        user_id=payload.criador_id, # <-- MUDE AQUI! Pegue o ID do payload
+        user_id=usuario_logado_id,
         role=EventRelationRole.organizador,
         status=EventRelationStatus.ativo
     )
     db.add(organizer_relation)
     db.commit()
-    # ---------------------------------------------------------
     
+    # Retorna o objeto event puro. O response_model (EventRead) vai validá-lo perfeitamente
     return event
 
 

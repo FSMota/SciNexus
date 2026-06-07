@@ -49,7 +49,7 @@ export default function DashboardPage() {
                 {user.full_name || user.username}
               </h2>
               <p className="mt-3 text-base leading-7 text-muted-foreground">
-                Gerencie suas inscrições, submissões e eventos publicados aqui. O catálogo agora está em uma aba separada no topo.
+                Gerencie suas inscrições, submissões e eventos publicados aqui.
               </p>
             </div>
 

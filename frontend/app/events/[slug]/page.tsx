@@ -2,15 +2,16 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, MapPin, CalendarDays, Sparkles } from 'lucide-react'
 import { categoryLabels, categoryStyles, type CategoryName } from '@/components/catalog/catalog-data'
 import { useAuth } from '@/hooks/useAuth'
 import { useEventBySlug } from '@/hooks/useEvents'
-import { useSubscribeToEvent } from '@/hooks/useEventMutations'
 import { useEventParticipation } from '@/hooks/useEventParticipation'
 import { ReviewerCTA } from '@/components/events/reviewer-cta'
+import { toast } from 'sonner'
+import { subscribeToEvent, getMyRegistrations } from '@/services/event-api'
 
 const bannerGradients: Record<CategoryName, string> = {
   tecnologia: 'from-sky-600 via-blue-600 to-cyan-400',
@@ -21,7 +22,7 @@ const bannerGradients: Record<CategoryName, string> = {
 }
 
 function buildGoogleMapsEmbedUrl(location: string) {
-  return `https://www.google.com/maps?q=${encodeURIComponent(location)}&z=15&output=embed`
+  return `https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=15&ie=UTF8&iwloc=&output=embed`
 }
 
 export default function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -29,9 +30,33 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
   const router = useRouter()
   const { user, isLoading, isAuthenticated } = useAuth()
   const { event, isLoading: isEventLoading, error } = useEventBySlug(slug)
-  const { subscribe, isSubmitting: registering } = useSubscribeToEvent()
-  const { isRegistered, isSubmitted, markRegistered, markSubmitted } = useEventParticipation(user?.id ?? null)
+  const { isSubmitted, markSubmitted } = useEventParticipation(user?.id ?? null)
+
   const [submitting, setSubmitting] = useState(false)
+  const [isRegisteredListener, setIsRegisteredListener] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false)
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true)
+
+  useEffect(() => {
+    if (!isAuthenticated || !user || !event) {
+      setIsCheckingStatus(false)
+      return
+    }
+
+    async function checkRegistration() {
+      try {
+        const minhasInscricoes = await getMyRegistrations(user!.id)
+        const jaInscrito = minhasInscricoes.some(rel => rel.event_id === event!.id)
+        setIsRegisteredListener(jaInscrito)
+      } catch (err) {
+        console.error("Erro ao verificar inscrição", err)
+      } finally {
+        setIsCheckingStatus(false)
+      }
+    }
+
+    checkRegistration()
+  }, [isAuthenticated, user, event])
 
   const ensureAuthOrRedirect = () => {
     if (!isAuthenticated) {
@@ -45,12 +70,19 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
     if (!ensureAuthOrRedirect()) return
     if (!event || !user) return
 
+    setIsRegistering(true)
     try {
-      await subscribe(slug, user.id)
-      markRegistered(slug)
-      alert('Inscrição realizada!')
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Falha ao realizar inscrição')
+      await subscribeToEvent(event.id, user.id)
+      setIsRegisteredListener(true)
+      toast.success('Inscrição confirmada!', {
+        description: `Você agora é um ouvinte do evento ${event.title}.`
+      })
+    } catch (error: any) {
+      toast.error('Falha na inscrição', {
+        description: error.message || 'Ocorreu um erro ao tentar se inscrever.'
+      })
+    } finally {
+      setIsRegistering(false)
     }
   }
 
@@ -61,7 +93,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
     // Redireciona para a página do formulário passando o ID do evento na URL
     router.push(`/events/submission?eventoId=${event.id}`)
   }
-  const registered = isRegistered(slug)
+
   const submitted = isSubmitted(slug)
 
   if (isEventLoading) {
@@ -90,14 +122,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
   return (
     <main className="min-h-screen bg-background py-12">
       <div className="mx-auto max-w-4xl space-y-6 px-4">
-        <div className={`relative overflow-hidden rounded-4xl bg-linear-to-br ${bannerGradients[event.category]} text-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]`}>
+        <div className={`relative overflow-hidden rounded-4xl bg-linear-to-br ${bannerGradients[event.category as CategoryName]} text-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]`}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.28),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.18),transparent_30%)]" />
           <div className="absolute -right-10 top-8 h-40 w-40 rounded-full bg-white/15 blur-3xl" />
           <div className="absolute -left-14 bottom-0 h-44 w-44 rounded-full bg-black/10 blur-3xl" />
           <div className="relative grid gap-8 p-6 md:grid-cols-[1.3fr_0.7fr] md:p-8">
             <div className="space-y-5">
               <div className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em]">
-                {categoryLabels[event.category]}
+                {categoryLabels[event.category as CategoryName]}
               </div>
               <div className="space-y-3">
                 <h1 className="text-3xl font-bold tracking-tight md:text-5xl">{event.title}</h1>
@@ -125,8 +157,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
                 <p className="text-sm text-white/80">Inscrição para ouvintes e submissão para pesquisadores.</p>
               </div>
               <div className="flex flex-col gap-3">
-                <Button onClick={handleRegister} disabled={registered || registering}>
-                  {registered ? 'Inscrito' : registering ? 'Inscrevendo...' : 'Inscrever-se (ouvinte)'}
+                <Button
+                  onClick={handleRegister}
+                  disabled={isRegisteredListener || isRegistering || isCheckingStatus}
+                >
+                  {isCheckingStatus ? 'Verificando...' : isRegisteredListener ? 'Inscrito' : isRegistering ? 'Inscrevendo...' : 'Inscrever-se (ouvinte)'}
                 </Button>
                 <Button variant="secondary" onClick={handleSubmit} disabled={submitted || submitting}>
                   {submitted ? 'Submetido' : submitting ? 'Enviando...' : 'Submeter pesquisa (pesquisador)'}
@@ -194,8 +229,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
 
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] ${categoryStyles[event.category]}`}>
-              {categoryLabels[event.category]}
+            <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] ${categoryStyles[event.category as CategoryName]}`}>
+              {categoryLabels[event.category as CategoryName]}
             </div>
             <h2 className="text-lg font-semibold">Informações adicionais</h2>
           </div>
