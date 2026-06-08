@@ -20,14 +20,39 @@ O projeto foi arquitetado com foco extremo em escalabilidade e manutenibilidade,
 
 ## 📸 Telas da Aplicação
 
+## 📸 Telas da Aplicação
+
+### 🔐 Autenticação e Acesso
 <div align="center">
-  <img src="https://via.placeholder.com/800x400?text=Inserir+Imagem+da+Tela+de+Cat%C3%A1logo" alt="Catálogo de Eventos" width="48%">
-  <img src="https://via.placeholder.com/800x400?text=Inserir+Imagem+do+Dashboard+do+Usu%C3%A1rio" alt="Dashboard e Sessões" width="48%">
+  <img src="images/login.png" alt="Tela de Login" width="48%">
+  <img src="images/cadastro.png" alt="Tela de Cadastro" width="48%">
 </div>
 <br>
+
+### 🌍 Navegação e Descoberta
 <div align="center">
-  <img src="https://via.placeholder.com/800x400?text=Inserir+Imagem+da+Submiss%C3%A3o+de+Artigos" alt="Upload de PDFs" width="48%">
-  <img src="https://via.placeholder.com/800x400?text=Inserir+Imagem+do+Painel+de+Avalia%C3%A7%C3%A3o" alt="Painel de Peer Review" width="48%">
+  <img src="images/tela%20inicial.png" alt="Dashboard Inicial" width="48%">
+  <img src="images/catalogo%20de%20eventos.png" alt="Catálogo de Eventos" width="48%">
+</div>
+<br>
+
+### 📅 Gestão de Congressos e Simpósios
+<div align="center">
+  <img src="images/tela%20do%20evento.png" alt="Detalhes do Evento" width="48%">
+  <img src="images/tela%20edi%C3%A7%C3%A3o%20de%20evento.png" alt="Edição de Evento" width="48%">
+</div>
+<br>
+
+### 🔬 Fluxo Científico e Revisão por Pares
+<div align="center">
+  <img src="images/submiss%C3%A3o%20de%20artigo.png" alt="Formulário de Submissão de Artigo" width="48%">
+  <img src="images/tela%20de%20avalia%C3%A7%C3%A3o%20de%20artigo.png" alt="Painel de Avaliação do Revisor" width="48%">
+</div>
+<br>
+
+### 📊 Histórico e Acompanhamento
+<div align="center">
+  <img src="images/hist%C3%B3rico%20de%20revisor.png" alt="Histórico do Revisor" width="98%">
 </div>
 
 ---
