@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@/types'
 import { api } from '@/services/api'
+import { currentUserSchema } from '../lib/schemas'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -20,7 +21,7 @@ export function useAuth() {
       const response = await api.get('/auth/me')
 
       if (response.ok) {
-        const data = await response.json()
+        const data = currentUserSchema.parse(await response.json())
         setUser(data)
         setIsAuthenticated(true)
       } else {

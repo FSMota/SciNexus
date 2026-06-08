@@ -3,6 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from sqlalchemy.orm import Session
 
+from app.api.routes.event_relations import router as event_relations_router
+from app.api.routes.events import router as events_router
+from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_db
 
 
@@ -17,6 +20,20 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    # Permite a origem do seu frontend Next.js
+    allow_origins=["http://localhost:3000"], 
+    allow_credentials=True,
+    # O "*" permite todos os métodos (GET, POST, PUT, DELETE, OPTIONS)
+    allow_methods=["*"], 
+    # O "*" permite todos os cabeçalhos (Authorization, Content-Type, etc.)
+    allow_headers=["*"], 
+)
+
+app.include_router(events_router)
+app.include_router(event_relations_router)
 
 
 @app.get("/")

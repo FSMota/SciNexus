@@ -56,6 +56,9 @@ services:
       - db
     networks:
       - scinexus-net
+    volumes:
+      # Mapeia a pasta local do seu projeto para a pasta do container
+      - ./submission-service/uploads:/app/uploads
 
 networks:
   scinexus-net:
