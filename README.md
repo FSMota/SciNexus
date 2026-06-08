@@ -1,42 +1,119 @@
-# SciNexus - Sistema de Eventos Científicos Online
+# 🔬 SciNexus - Plataforma de Gestão Científica e Peer Review
 
-**Universidade Federal de Alagoas (UFAL)**  
-**Disciplina:** Engenharia de Software  
+![Python](https://img.shields.io/badge/python-3.12-3670A0?style=flat-square&logo=python&logoColor=ffdd54)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi)
+![Next JS](https://img.shields.io/badge/Next-black?style=flat-square&logo=next.js&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat-square&logo=docker&logoColor=white)
+![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=flat-square&logo=postgresql&logoColor=white)
+
+**Universidade Federal de Alagoas (UFAL)** **Disciplina:** Engenharia de Software  
 **Autor:** Filipe Simões Mota  
 
 ---
 
 ## 📌 Sobre o Projeto
-O **SciNexus** é uma plataforma digital projetada para o gerenciamento de eventos científicos, congressos e conferências. O sistema automatiza o ciclo de vida de um evento acadêmico, desde a criação da agenda até a submissão de artigos (*papers*), processo de revisão por pares (*peer-review*) e emissão de certificados.
+O **SciNexus** é uma plataforma digital distribuída projetada para a orquestração completa de eventos científicos, congressos e simpósios. Nascido para resolver os gargalos de plataformas acadêmicas legadas, o sistema automatiza desde a submissão de trabalhos científicos (*papers*) até o rigoroso fluxo de revisão por pares (*peer-review*).
 
-O projeto foi desenvolvido com foco em escalabilidade e manutenibilidade, aplicando o padrão arquitetural de **Microserviços** no backend e **Componentes de Software** no frontend.
+O projeto foi arquitetado com foco extremo em escalabilidade e manutenibilidade, aplicando o padrão de **Microsserviços** no backend (com bancos de dados isolados) e o padrão **BFF (Backend-For-Frontend)** no cliente para consumo centralizado das APIs.
 
-## 📦 Estrutura de Microserviços
-O ecossistema é dividido nos seguintes serviços independentes:
+---
 
-1. **`auth-service` (Porta 8001):** Responsável pela identidade, cadastro, login e emissão de JWT. Conecta-se ao banco `auth_db`.
-2. **`event-service` (Porta 8002):** Gerencia o CRUD de eventos, agenda, palestrantes e inscrições. Conecta-se ao banco `event_db`.
-3. **`submission-service` (Porta 8003):** Lida com upload de arquivos, atribuição de revisores e notas. Conecta-se ao banco `submission_db`.
-4. **`frontend` (Porta 3000):** Interface do usuário em Next.js atuando como cliente consumidor das APIs.
+## 📸 Telas da Aplicação
+
+<div align="center">
+  <img src="https://via.placeholder.com/800x400?text=Inserir+Imagem+da+Tela+de+Cat%C3%A1logo" alt="Catálogo de Eventos" width="48%">
+  <img src="https://via.placeholder.com/800x400?text=Inserir+Imagem+do+Dashboard+do+Usu%C3%A1rio" alt="Dashboard e Sessões" width="48%">
+</div>
+<br>
+<div align="center">
+  <img src="https://via.placeholder.com/800x400?text=Inserir+Imagem+da+Submiss%C3%A3o+de+Artigos" alt="Upload de PDFs" width="48%">
+  <img src="https://via.placeholder.com/800x400?text=Inserir+Imagem+do+Painel+de+Avalia%C3%A7%C3%A3o" alt="Painel de Peer Review" width="48%">
+</div>
+
+---
+
+## 🚀 Principais Funcionalidades
+
+* **Gestão de Identidade:** Autenticação stateless via JWT.
+* **Catálogo de Eventos:** CRUD completo para organizadores e vitrine de eventos para ouvintes.
+* **Motor de Submissões:** Suporte a upload seguro de arquivos em nuvem/disco (`multipart/form-data`) para PDFs científicos.
+* **Painel de Peer-Review:** Workflow de avaliação de artigos com máquina de estados rigorosa (`SUBMETIDO`, `EM_REVISAO`, `APROVADO`, `REJEITADO`) e sistema de feedback técnico.
+* **🧠 Inteligência de Recomendação:** Motor de sugestão de revisores (*Content-Based Filtering*) construído com **Coeficiente de Jaccard**, cruzando palavras-chave dos artigos com a expertise do corpo científico.
+
+---
+
+## 📦 Arquitetura de Microsserviços e Stack Tecnológica
+
+O ecossistema é dividido em serviços independentes, comunicando-se via REST, aplicando o princípio de *Database per Service*:
+
+| Serviço | Porta | Tecnologias Principais | Banco de Dados | Responsabilidade |
+| :--- | :--- | :--- | :--- | :--- |
+| **`auth-service`** | `8001` | FastAPI, Python, Pydantic | PostgreSQL (auth_db) | Identidade e Tokens JWT |
+| **`event-service`** | `8002` | FastAPI, Python, SQLAlchemy | PostgreSQL (event_db) | Eventos e Inscrições |
+| **`submission-service`** | `8003` | FastAPI, Python, Alembic | PostgreSQL (sub_db) | PDFs, Recomendações e Pareceres |
+| **`frontend (BFF)`** | `3000` | Next.js, React, Tailwind, shadcn | N/A | UI e API Gateway nativo |
+
+> **Nota de Infraestrutura:** O projeto utiliza o gerenciador **`uv` (Astral)** para resolução e instalação de dependências em Rust, garantindo builds de contêineres ultrarrápidos e determinísticos.
+
+![Diagrama de Arquitetura](https://via.placeholder.com/1000x350?text=Inserir+Diagrama+de+Arquitetura+Aqui)
+
+---
 
 ## 🛠️ Como Executar o Projeto Localmente
 
 **Pré-requisitos:**
 * Docker e Docker Compose instalados.
-* Git.
+* Node.js v18+.
+* Utilitário `make` nativo do sistema (Linux/Mac) ou WSL (Windows).
 
-**Atalhos com Make:**
-```bash
-make build
-make start
-make down
-make recreate
-```
+### Opção 1: Execução Total via Docker (Recomendado)
 
-Se quiser, você também pode ver todos os alvos disponíveis com `make help`.
+O projeto conta com um `Makefile` configurado para orquestrar toda a infraestrutura com comandos simples.
 
-**Passos:**
 1. Clone o repositório:
    ```bash
    git clone [https://github.com/FSMota/scinexus.git](https://github.com/FSMota/scinexus.git)
    cd scinexus
+   ```
+
+2. Suba toda a malha de microsserviços e o banco de dados:
+   ```bash
+   make start
+   ```
+   *Este comando construirá as imagens de todos os serviços usando o `uv` e aplicará as migrações automaticamente.*
+
+3. Para acompanhar os logs em tempo real:
+   ```bash
+   make logs
+   ```
+
+4. Em outro terminal, inicie o cliente Frontend (Gateway):
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   Acesse a plataforma em: `http://localhost:3000`
+
+### Opção 2: Comandos de Manutenção Úteis
+```bash
+make db-up         # Sobe apenas o PostgreSQL
+make run-auth      # Roda o serviço de Auth localmente (via uv run) com hot-reload
+make clean         # Derruba os contêineres e limpa os volumes de banco de dados
+make ps            # Lista os serviços ativos na rede Docker
+```
+
+---
+
+## 📄 Documentação Inteligente (OpenAPI / Swagger)
+
+Como os serviços não utilizam um monolito, as APIs de cada domínio são autodocumentadas seguindo a especificação **OpenAPI**. Com a infraestrutura rodando, você pode testar as rotas, injetar tokens e analisar os esquemas de validação interativamente através do **Swagger UI**:
+
+* **Auth API Docs:** [http://localhost:8001/docs](http://localhost:8001/docs)
+* **Event API Docs:** [http://localhost:8002/docs](http://localhost:8002/docs)
+* **Submission API Docs:** [http://localhost:8003/docs](http://localhost:8003/docs)
+
+![Swagger UI Preview](https://via.placeholder.com/1000x300?text=Inserir+Print+do+Swagger+Aqui)
+
+---
+*Desenvolvido como MVP para aprovação na disciplina de Engenharia de Software - 2024.*
