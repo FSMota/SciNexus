@@ -49,6 +49,7 @@ def _create_or_get_relation(
     user_id: int,
     role: EventRelationRole,
     status: EventRelationStatus,
+    tags: list[str] = None,
 ) -> EventUserRelation:
     relation = (
         db.query(EventUserRelation)
@@ -65,7 +66,7 @@ def _create_or_get_relation(
         db.refresh(relation)
         return relation
 
-    relation = EventUserRelation(event_id=event_id, user_id=user_id, role=role, status=status)
+    relation = EventUserRelation(event_id=event_id, user_id=user_id, role=role, status=status, tags=tags or [])
     db.add(relation)
     db.commit()
     db.refresh(relation)
@@ -138,6 +139,7 @@ def apply_for_reviewer(
         user_id=payload.user_id,
         role=EventRelationRole.revisor,
         status=EventRelationStatus.pendente,
+        tags=payload.tags,
     )
 
 

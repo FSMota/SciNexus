@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 from enum import Enum
 
 from sqlalchemy import Column, DateTime, Enum as SQLEnum, ForeignKey, Integer, UniqueConstraint, event
+from sqlalchemy.dialects.sqlite import JSON as SQLiteJSON
+from sqlalchemy.types import JSON
 
 from app.database import Base
 
@@ -38,6 +40,7 @@ class EventUserRelation(Base):
         ),
         nullable=False,
     )
+    tags = tags = Column(JSON().with_variant(SQLiteJSON, "sqlite"), nullable=False, default=list)
     status = Column(
         SQLEnum(
             EventRelationStatus,

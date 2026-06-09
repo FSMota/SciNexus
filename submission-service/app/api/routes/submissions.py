@@ -8,7 +8,8 @@ from app.database import get_db
 from app.models import Submission
 from app.schemas import SubmissionRead
 from app.security import get_usuario_logado_id
-# from app.dependencias import get_usuario_logado (Sua função que valida o JWT)
+from app.schemas.recommender import RevisorMatchRequest
+from app.utils.recommender import recomendar_artigos # Importando sua função da imagem
 
 router = APIRouter(prefix="/eventos", tags=["Submissões"])
 
@@ -126,3 +127,27 @@ def review_submission(submission_id: int, payload: ReviewPayload, db: Session = 
     db.refresh(submission)
     
     return submission
+
+@router.post("/eventos/{event_id}/recomendacoes")
+def listar_artigos_recomendados(
+    event_id: int, 
+    payload: RevisorMatchRequest, 
+    db: Session = Depends(get_db)
+):
+    # 1. Busca no banco isolado (submission_db) apenas os artigos pendentes deste evento
+    artigos_pendentes = db.query(Submission).filter(
+        Submission.event_id == event_id,
+        Submission.status == "SUBMETIDO" # Ou o Enum correspondente que você estiver usando
+    ).all()
+    
+    # 2. Se não houver artigos, retorna lista vazia rapidamente
+    if not artigos_pendentes:
+        return []
+        
+    # 3. Injeta a lista do banco e as tags recebidas pelo BFF no seu motor de recomendação
+    artigos_ordenados = recomendar_artigos(
+        perfil_revisor_tags=payload.tags_revisor,
+        lista_submissoes=artigos_pendentes
+    )
+    
+    return artigos_ordenados

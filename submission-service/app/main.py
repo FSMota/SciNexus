@@ -32,7 +32,7 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
     
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Permite requisições de qualquer porta (ideal para dev local)
+    allow_origins=["http://localhost:3000"], # Permite requisições de qualquer porta (ideal para dev local)
     allow_credentials=True,
     allow_methods=["*"], # Permite GET, POST, PUT, DELETE, etc.
     allow_headers=["*"], # Permite o header de Authorization com o token JWT

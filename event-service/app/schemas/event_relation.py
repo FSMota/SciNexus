@@ -14,12 +14,14 @@ class EventRelationRead(BaseModel):
     role: EventRelationRole
     status: EventRelationStatus
     approved_by_user_id: int | None
+    tags: list[str] = Field(default_factory=list) # <--- NOVA LINHA
     created_at: datetime
     updated_at: datetime
 
 
 class ReviewerApplicationCreate(BaseModel):
     user_id: int = Field(gt=0)
+    tags: list[str] = Field(default_factory=list) # <--- NOVA LINHA
 
 
 class ReviewerDecisionCreate(BaseModel):
