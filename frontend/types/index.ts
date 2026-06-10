@@ -7,6 +7,7 @@ export type User = {
   username: string
   full_name: string | null
   is_active: boolean
+  tags?: string[]
 }
 
 export type LoginResponse = {

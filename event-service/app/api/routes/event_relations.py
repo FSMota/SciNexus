@@ -51,6 +51,10 @@ def _create_or_get_relation(
     status: EventRelationStatus,
     tags: list[str] = None,
 ) -> EventUserRelation:
+    
+    if tags is None:
+        tags = []
+
     relation = (
         db.query(EventUserRelation)
         .filter(
@@ -66,7 +70,7 @@ def _create_or_get_relation(
         db.refresh(relation)
         return relation
 
-    relation = EventUserRelation(event_id=event_id, user_id=user_id, role=role, status=status, tags=tags or [])
+    relation = EventUserRelation(event_id=event_id, user_id=user_id, role=role, status=status, tags=tags)
     db.add(relation)
     db.commit()
     db.refresh(relation)

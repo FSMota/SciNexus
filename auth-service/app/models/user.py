@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
-
+from sqlalchemy.dialects.sqlite import JSON as SQLiteJSON
+from sqlalchemy.types import JSON
 from app.database import Base
 
 
@@ -16,3 +17,4 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     token_version = Column(Integer, nullable=False, default=0)
+    tags = Column(JSON().with_variant(SQLiteJSON, "sqlite"), nullable=False, default=list)

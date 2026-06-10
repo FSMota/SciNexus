@@ -7,7 +7,7 @@ from app.core.security import create_access_token
 from app.database import get_db
 from app.models import User
 from app.schemas.auth import LoginRequest, Token
-from app.schemas.user import UserCreate, UserRead
+from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.utils.security import hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -31,6 +31,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         hashed_password=hash_password(user.password),
         full_name=user.full_name,
+        tags=user.tags,
     )
     db.add(db_user)
     db.commit()
@@ -55,10 +56,26 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     return Token(access_token=token)
 
 
+# 1. Esta é a rota que o seu useAuth precisa para carregar a página (GET)
 @router.get("/me", response_model=UserRead)
 def read_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+# 2. Esta é a rota que nós criamos agora para salvar as tags (PATCH)
+@router.patch("/me", response_model=UserRead)
+def update_me(
+    payload: UserUpdate, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    if payload.tags is not None:
+        current_user.tags = payload.tags
+
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    return current_user
 
 @router.post("/logout")
 def logout(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

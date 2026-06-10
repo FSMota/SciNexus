@@ -36,6 +36,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
   const [isRegisteredListener, setIsRegisteredListener] = useState(false)
   const [isRegistering, setIsRegistering] = useState(false)
   const [isCheckingStatus, setIsCheckingStatus] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !user || !event) {

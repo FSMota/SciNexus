@@ -18,6 +18,10 @@ export type AuthTokenResponse = {
   token_type: string
 }
 
+export type UpdateProfilePayload = {
+  tags: string[]
+}
+
 // 1. Função de erro turbinada para entender o FastAPI
 async function readErrorMessage(response: Response, fallback: string) {
   try {
@@ -52,5 +56,14 @@ export async function registerUser(payload: RegisterPayload): Promise<void> {
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, 'Falha ao registrar'))
+  }
+}
+
+export async function updateProfile(payload: UpdateProfilePayload): Promise<void> {
+  // Passamos apenas a rota e os dados. Seu wrapper 'api' faz o resto!
+  const response = await api.patch('/auth/me', payload)
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Falha ao atualizar o perfil'))
   }
 }

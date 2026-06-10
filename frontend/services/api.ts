@@ -58,10 +58,10 @@ export const api = {
     return response;
   },
 
-  async put(endpoint: string, body?: unknown) {
+  async patch(endpoint: string, body?: unknown) {
     const token = getToken()
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),

@@ -22,6 +22,7 @@ export function useAuth() {
 
       if (response.ok) {
         const data = currentUserSchema.parse(await response.json())
+        console.log('Usuário autenticado:', data)
         setUser(data)
         setIsAuthenticated(true)
       } else {

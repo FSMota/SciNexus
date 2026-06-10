@@ -8,6 +8,9 @@ import { SessionTabs } from '@/components/events/session-tabs'
 import { TopNav } from '@/components/navigation/top-nav'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import { SeletorDeTagsExpertise } from '@/components/dashboard/tags-selector'
+import { toast } from 'sonner'
+import { updateProfile } from '@/services/auth-api'
 
 export default function DashboardPage() {
   const { user, isLoading, isAuthenticated, logout } = useAuth()
@@ -75,6 +78,24 @@ export default function DashboardPage() {
               <p className="mt-2 text-lg font-medium text-foreground">{user.username}</p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <div>{user.tags}</div>
+          <SeletorDeTagsExpertise
+            tagsSalvas={user.tags}
+            onSalvar={async (tags) => {
+              try {
+                await updateProfile({ tags });
+
+                toast.success('Áreas de expertise salvas com sucesso!');
+                router.refresh();
+
+              } catch (error: any) {
+                toast.error('Erro ao salvar tags', { description: error.message });
+              }
+            }}
+          />
         </div>
 
         <div className="mt-8">
