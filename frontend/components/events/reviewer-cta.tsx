@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
-import { checkReviewerStatus } from '@/services/event-api'
-// Importe o modal que acabamos de criar
-import { ModalCandidaturaRevisor } from './reviewer-request-modal' 
+import { toast } from 'sonner' // Opcional: para dar o feedback de sucesso na tela
+// IMPORTANTE: Traga a sua função de solicitar a vaga para cá (substitua pelo nome real se for diferente)
+import { checkReviewerStatus, requestReviewerRole } from '@/services/event-api'
 
 interface ReviewerCTAProps {
   eventId: number
@@ -16,9 +16,7 @@ export function ReviewerCTA({ eventId }: ReviewerCTAProps) {
   
   const [alreadyRequested, setAlreadyRequested] = useState(false)
   const [isLoadingStatus, setIsLoadingStatus] = useState(true)
-  
-  // NOVO: Estado que controla o modal
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false) // Estado para o loading do botão
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -34,13 +32,33 @@ export function ReviewerCTA({ eventId }: ReviewerCTAProps) {
         const hasRequested = await checkReviewerStatus(eventId, user.id) 
         setAlreadyRequested(hasRequested)
       } catch (error) {
-        console.error("Erro", error)
+        console.error("Erro ao verificar status:", error)
       } finally {
         setIsLoadingStatus(false)
       }
     }
     verifyStatus()
   }, [eventId, isAuthenticated, user])
+
+  // Função que dispara quando o usuário clica no botão
+  const handleRequestReviewer = async () => {
+    if (!user) return
+
+    try {
+      setIsSubmitting(true)
+      
+      // Faça a chamada direta para o seu backend aqui
+      await requestReviewerRole(eventId, user.id) 
+      
+      setAlreadyRequested(true)
+      toast.success('Sua solicitação para revisor foi enviada com sucesso!')
+      
+    } catch (error: any) {
+      toast.error('Erro ao enviar solicitação', { description: error.message })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   if (isLoadingStatus || !isAuthenticated || !user) return null
 
@@ -53,25 +71,17 @@ export function ReviewerCTA({ eventId }: ReviewerCTAProps) {
       
       <Button 
         size="lg"
-        // Em vez de fazer a API call direto, apenas abre o modal
-        onClick={() => setIsModalOpen(true)} 
-        disabled={alreadyRequested}
+        onClick={handleRequestReviewer} 
+        disabled={alreadyRequested || isSubmitting}
         variant={alreadyRequested ? "secondary" : "default"}
         className="w-full sm:w-auto"
       >
-        {alreadyRequested ? 'Solicitação em Análise' : 'Solicitar vaga de Revisor'}
+        {isSubmitting 
+          ? 'Enviando solicitação...' 
+          : alreadyRequested 
+            ? 'Solicitação em Análise' 
+            : 'Solicitar vaga de Revisor'}
       </Button>
-
-      {/* Renderização condicional do Modal */}
-      {isModalOpen && (
-        <ModalCandidaturaRevisor
-          eventId={eventId}
-          userId={user.id}
-          onClose={() => setIsModalOpen(false)}
-          // O Modal avisa quando o POST deu 200 OK, aí trancamos o botão
-          onSuccess={() => setAlreadyRequested(true)} 
-        />
-      )}
     </div>
   )
 }

@@ -40,3 +40,29 @@ class Submission(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    
+    # MÁGICA ATUALIZADA: Limpeza de dados em tempo de leitura
+    @property
+    def tags(self):
+        raw_data = self.palavras_chave
+        
+        if not raw_data:
+            return []
+            
+        # Se por acaso o banco salvou como string única
+        if isinstance(raw_data, str):
+            import json
+            try:
+                raw_data = json.loads(raw_data)
+            except:
+                raw_data = [t.strip() for t in raw_data.split(",")]
+                
+        # Filtra a lista removendo vazios e a maldita string "undefined"
+        if isinstance(raw_data, list):
+            return [str(t) for t in raw_data if str(t).strip() and str(t).strip().lower() != "undefined"]
+            
+        return []
+
+    @tags.setter
+    def tags(self, value):
+        self.palavras_chave = value

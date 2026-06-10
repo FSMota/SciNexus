@@ -121,12 +121,12 @@ export async function getMyReviewerRequests(userId: number): Promise<EventRelati
 }
 
 // 1. Solicitar vaga de revisor (Usa a sua rota POST /review-applications)
-export async function requestReviewerRole(eventId: number, userId: number, tags: string[]): Promise<EventRelation> {
+export async function requestReviewerRole(eventId: number, userId: number): Promise<EventRelation> {
   const response = await fetch(`${EVENT_SERVICE_URL}/events/${eventId}/review-applications`, {
     method: 'POST',
     headers: getAuthHeaders(),
     // O seu Pydantic (ReviewerApplicationCreate) espera o user_id no corpo
-    body: JSON.stringify({ user_id: userId, tags }), 
+    body: JSON.stringify({ user_id: userId }), 
   })
 
   if (!response.ok) throw new Error(await readErrorMessage(response, 'Falha ao solicitar vaga'))

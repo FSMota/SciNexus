@@ -47,7 +47,7 @@ export default function EditEventPage({ params }: { params: Promise<{ slug: stri
       // Processa a conversão de array de tags se necessário (baseado em como o updateEvent espera receber)
       const payload = {
         ...data,
-        tags: typeof data.tags === 'string' ? data.tags.split(',').map(t => t.trim()) : data.tags,
+        tags: data.tags,
         data_fim: data.data_fim && data.data_fim.trim() !== "" ? data.data_fim : null,
       }
       
@@ -86,7 +86,7 @@ export default function EditEventPage({ params }: { params: Promise<{ slug: stri
              : 'inscrições abertas',
     submissoes_abertas: (event as any).submissionsOpen ?? true, // Atenção: no catalogSchema o nome é submissionsOpen!
     resumo: event.summary,
-    tags: Array.isArray(event.tags) ? event.tags.join(', ') : event.tags,
+    tags: Array.isArray(event.tags) ? event.tags : [],
     // Tratando a conversão de attendees (string no catalog) para numero (no form)
     numero_participantes: parseInt(event.attendees) || 0,
   }

@@ -81,7 +81,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-8">
-          <div>{user.tags}</div>
           <SeletorDeTagsExpertise
             tagsSalvas={user.tags}
             onSalvar={async (tags) => {

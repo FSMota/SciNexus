@@ -11,8 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 
+// 1. IMPORTAMOS O NOSSO NOVO COMPONENTE AQUI
+// (Ajuste o caminho de importação se você salvou em outra pasta)
+import { SeletorDeTagsFormulario } from '@/components/dashboard/tags-form-selector' 
+
 interface EventFormProps {
-  initialData?: Partial<EventFormValues>; // Adicionamos a prop aqui
+  initialData?: Partial<EventFormValues>;
   onSubmit: (values: EventFormValues) => Promise<void>;
   isSubmitting?: boolean;
   submitLabel?: string;
@@ -30,7 +34,7 @@ export function EventForm({ initialData, onSubmit, isSubmitting, submitLabel = "
         status: 'inscrições abertas',
         submissoes_abertas: true,
         resumo: '',
-        tags: '',
+        tags: [], // 2. CORRIGIDO: Agora inicializa como um array vazio para satisfazer o Zod e o TypeScript
         numero_participantes: 0,
     },
   })
@@ -104,9 +108,22 @@ export function EventForm({ initialData, onSubmit, isSubmitting, submitLabel = "
           <Textarea id="resumo" className="min-h-32" {...form.register('resumo')} />
         </div>
 
+        {/* 3. A MÁGICA ACONTECE AQUI: Substituímos o Input antigo pelo nosso Seletor */}
         <div className="space-y-2 lg:col-span-2">
-          <Label htmlFor="tags">Tags</Label>
-          <Input id="tags" placeholder="Ex.: ciência, inovação" {...form.register('tags')} />
+          <Label htmlFor="tags">Tags do Evento *</Label>
+          <Controller
+            name="tags"
+            control={form.control}
+            render={({ field }) => (
+              <SeletorDeTagsFormulario 
+                value={field.value || []} 
+                onChange={field.onChange} 
+              />
+            )}
+          />
+          {form.formState.errors.tags && (
+            <p className="text-sm text-destructive">{form.formState.errors.tags.message}</p>
+          )}
         </div>
 
         <div className="flex items-center justify-between rounded-2xl border p-4 lg:col-span-2">

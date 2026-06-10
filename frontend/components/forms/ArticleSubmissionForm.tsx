@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { SeletorDeTagsFormulario } from '@/components/dashboard/tags-form-selector'; // Certifique-se de que o caminho está correto
 
 interface Props {
   eventoId?: number;
@@ -20,15 +21,21 @@ export default function ArticleSubmissionForm({ eventoId, readOnly = false, init
 
   const router = useRouter();
 
-  const {
+const {
     register,
     handleSubmit,
     control,
+    watch, // <-- Adicionamos o watch para ler as tags no modo readOnly
     formState: { errors },
   } = useForm<ArticleSubmissionFormData>({
     resolver: zodResolver(articleSubmissionFormSchema),
-    defaultValues: initialData,
+    defaultValues: {
+      ...initialData,
+      tags: initialData?.tags || [], // Garante que comece sempre como array
+    },
   });
+
+  const tagsAtuais = watch('tags') || []; // <-- Usamos o watch para obter as tags atuais
 
   const onSubmit = async (data: ArticleSubmissionFormData) => {
     if (readOnly) return;
@@ -82,15 +89,34 @@ export default function ArticleSubmissionForm({ eventoId, readOnly = false, init
 
       <div className="space-y-2">
         <Label htmlFor="palavras_chave">Palavras-chave</Label>
-        <Input
-          id="palavras_chave"
-          {...register('palavras_chave')}
-          disabled={readOnly}
-          className={readOnly ? 'bg-muted text-muted-foreground' : ''}
-          placeholder="Ex: IA, Machine Learning, Otimização (separadas por vírgula)"
-        />
-        {errors.palavras_chave && (
-          <p className="text-sm text-destructive">{errors.palavras_chave.message as string}</p>
+        {readOnly ? (
+          // Visualização em Modo de Leitura
+          <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-muted/50 min-h-10.5">
+            {tagsAtuais.length > 0 ? (
+              tagsAtuais.map(tag => (
+                <span key={`ro-${tag}`} className="px-2 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full border border-primary/20">
+                  {tag}
+                </span>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground italic">Nenhuma palavra-chave definida.</span>
+            )}
+          </div>
+        ) : (
+          // Edição Interativa
+          <Controller
+            name="tags"
+            control={control}
+            render={({ field }) => (
+              <SeletorDeTagsFormulario 
+                value={field.value || []} 
+                onChange={field.onChange} 
+              />
+            )}
+          />
+        )}
+        {errors.tags && (
+          <p className="text-sm text-destructive">{errors.tags.message as string}</p>
         )}
       </div>
 

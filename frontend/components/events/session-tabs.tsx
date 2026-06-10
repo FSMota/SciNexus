@@ -156,11 +156,12 @@ export function SessionTabs() {
                 {eventoRelacionado?.title || `Evento #${req.event_id}`}
               </div>
               <div className="flex items-center gap-2 mt-1">
+                
+                <span className="text-xs text-muted-foreground">
+                  Status como revisor:
+                </span>
                 <span className={`${badgeColor} text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider`}>
                   {req.status}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Aprovado como revisor
                 </span>
               </div>
             </div>

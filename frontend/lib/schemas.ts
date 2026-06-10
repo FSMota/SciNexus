@@ -15,6 +15,7 @@ export const currentUserSchema = z.object({
   username: z.string(),
   full_name: z.string().nullable(),
   is_active: z.boolean(),
+  tags: z.array(z.string()).optional().default([]),
 })
 
 export const loginFormSchema = z.object({
@@ -38,7 +39,7 @@ export const eventFormSchema = z.object({
   status: z.enum(['inscrições abertas', 'inscrições encerradas']),
   submissoes_abertas: z.boolean(),
   resumo: z.string().trim().min(1, 'O resumo é obrigatório'),
-  tags: z.string(),
+  tags: z.array(z.string()).min(1, 'Selecione pelo menos uma tag para o evento'),
   numero_participantes: z.number().int().min(0, 'O número de participantes deve ser maior ou igual a zero'),
 })
 
@@ -50,7 +51,7 @@ export const articleSubmissionFormSchema = z.object({
   resumo: z.string()
     .min(20, "O resumo deve ter pelo menos 20 caracteres.")
     .max(5000, "O resumo atingiu o limite de tamanho."),
-  palavras_chave: z.string().min(3, "Insira pelo menos uma palavra-chave."),
+  tags: z.array(z.string()).min(1, 'Selecione pelo menos uma tag para o evento'),
   // Validação específica para o input type="file"
   arquivo_pdf: z
     .any()
